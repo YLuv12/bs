@@ -1,0 +1,118 @@
+<view class="page">
+  <view class="header">
+    <view class="header-content">
+      <view class="header-title">
+        <text class="title-text">{{lang === 'zh' ? '美食探索' : 'Food Explore'}}</text>
+        <view class="title-line"></view>
+      </view>
+      <view class="search-row">
+        <view class="search-box">
+          <text class="search-icon">🔍</text>
+          <input class="search-input" placeholder="{{lang === 'zh' ? '搜索美食、餐厅...' : 'Search food...'}}" value="{{keyword}}" bindconfirm="doSearch" bindinput="onSearch"/>
+          <text class="clear-icon" wx:if="{{keyword}}" bindtap="clearSearch">×</text>
+        </view>
+        <view class="filter-btn" bindtap="toggleFilter">
+          <text class="filter-icon">☰</text>
+        </view>
+      </view>
+      <scroll-view scroll-x class="category-scroll" show-scrollbar="{{false}}">
+        <view class="category-item {{category === '' ? 'active' : ''}}" bindtap="onCategoryChange" data-value="">{{lang === 'zh' ? '全部' : 'All'}}</view>
+        <view class="category-item {{category === 'snack' ? 'active' : ''}}" bindtap="onCategoryChange" data-value="snack">{{lang === 'zh' ? '小吃' : 'Snacks'}}</view>
+        <view class="category-item {{category === 'restaurant' ? 'active' : ''}}" bindtap="onCategoryChange" data-value="restaurant">{{lang === 'zh' ? '餐厅' : 'Restaurant'}}</view>
+        <view class="category-item {{category === 'local' ? 'active' : ''}}" bindtap="onCategoryChange" data-value="local">{{lang === 'zh' ? '特产' : 'Local'}}</view>
+        <view class="category-item {{category === 'dessert' ? 'active' : ''}}" bindtap="onCategoryChange" data-value="dessert">{{lang === 'zh' ? '甜品' : 'Dessert'}}</view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view class="list-content">
+    <view class="food-item animate-fade-up" wx:for="{{list}}" wx:key="id" style="animation-delay: {{index * 0.08}}s" bindtap="goToDetail" data-id="{{item.id}}">
+      <view class="item-visual">
+        <image class="item-img" src="{{item.image}}" mode="aspectFill" lazy-load/>
+        <view class="item-overlay">
+          <view class="item-rating">
+            <text class="rating-star">★</text>
+            <text class="rating-num">{{item.rating}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="item-info">
+        <view class="item-header">
+          <text class="item-name">{{item.name}}</text>
+          <view class="item-price">
+            <text class="price-symbol">¥</text>
+            <text class="price-num">{{item.price}}</text>
+          </view>
+        </view>
+        <view class="item-tags">
+          <text class="tag" wx:for="{{item.tags}}" wx:key="index" wx:for-item="tag">{{tag}}</text>
+        </view>
+        <view class="item-meta">
+          <view class="meta-item">
+            <text class="meta-icon">📍</text>
+            <text class="meta-text">{{item.region}}</text>
+          </view>
+          <view class="meta-item" wx:if="{{item.distanceText}}">
+            <text class="meta-icon">🚶</text>
+            <text class="meta-text">{{item.distanceText}}</text>
+          </view>
+        </view>
+        <view class="item-footer">
+          <view class="footer-item">
+            <text class="footer-num">{{item.ratingCount}}</text>
+            <text class="footer-label">{{lang === 'zh' ? '评价' : 'reviews'}}</text>
+          </view>
+          <view class="footer-item">
+            <text class="footer-icon">🕐</text>
+            <text class="footer-text">{{item.openTime}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{!loading && list.length === 0}}">
+      <text class="empty-icon">🍜</text>
+      <text class="empty-text">{{lang === 'zh' ? '暂无美食' : 'No food'}}</text>
+    </view>
+
+    <view class="loading" wx:if="{{loading}}">
+      <view class="loading-dots">
+        <view class="dot"></view>
+        <view class="dot"></view>
+        <view class="dot"></view>
+      </view>
+    </view>
+
+
+  </view>
+
+  <view class="back-top {{showBackTop ? 'show' : 'hide'}}" bindtap="goToTop">
+    <view class="back-top-icon"><text>↑</text></view>
+  </view>
+
+  <view class="filter-panel {{showFilter ? 'show' : ''}}" catchtouchmove="true">
+    <view class="filter-mask" bindtap="closeFilter"></view>
+    <view class="filter-content animate-slide">
+      <view class="filter-header">
+        <text class="filter-title">{{lang === 'zh' ? '筛选' : 'Filter'}}</text>
+        <text class="filter-clear" bindtap="clearFilter">{{lang === 'zh' ? '重置' : 'Reset'}}</text>
+      </view>
+      <view class="filter-section">
+        <view class="filter-label">{{lang === 'zh' ? '美食类型' : 'Category'}}</view>
+        <view class="filter-options">
+          <view class="option-item {{category === item.value ? 'active' : ''}}" wx:for="{{categories}}" wx:key="value" bindtap="onCategoryChange" data-value="{{item.value}}">{{item.label}}</view>
+        </view>
+      </view>
+      <view class="filter-section">
+        <view class="filter-label">{{lang === 'zh' ? '所在区域' : 'Region'}}</view>
+        <view class="filter-options">
+          <view class="option-item {{region === item.value ? 'active' : ''}}" wx:for="{{regions}}" wx:key="value" bindtap="onRegionChange" data-value="{{item.value}}">{{item.label}}</view>
+        </view>
+      </view>
+      <view class="filter-btns">
+        <view class="filter-btn cancel" bindtap="closeFilter">{{lang === 'zh' ? '取消' : 'Cancel'}}</view>
+        <view class="filter-btn confirm" bindtap="closeFilter">{{lang === 'zh' ? '确定' : 'Confirm'}}</view>
+      </view>
+    </view>
+  </view>
+</view>

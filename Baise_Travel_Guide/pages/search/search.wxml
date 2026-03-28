@@ -1,0 +1,82 @@
+<view class="page">
+  <view class="search-header">
+    <view class="search-box">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="{{lang === 'zh' ? '搜索景点、美食...' : 'Search attractions, food...'}}" value="{{keyword}}" bindinput="onInput" bindconfirm="doSearch" focus="{{true}}"/>
+      <text class="clear-icon" wx:if="{{keyword}}" bindtap="clearInput">×</text>
+    </view>
+    <view class="search-btn" bindtap="doSearch">{{lang === 'zh' ? '搜索' : 'Search'}}</view>
+  </view>
+
+  <!-- 搜索历史 -->
+  <view class="history-section" wx:if="{{!searched && historyList.length > 0}}">
+    <view class="section-header">
+      <text class="section-title">{{lang === 'zh' ? '搜索历史' : 'History'}}</text>
+      <text class="clear-text" bindtap="clearHistory">{{lang === 'zh' ? '清空' : 'Clear'}}</text>
+    </view>
+    <view class="history-list">
+      <view class="history-item" wx:for="{{historyList}}" wx:key="index" bindtap="onHistoryTap" data-keyword="{{item}}">{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 搜索结果 -->
+  <view class="result-section" wx:if="{{searched}}">
+    <view class="loading" wx:if="{{loading}}">
+      <text>{{lang === 'zh' ? '搜索中...' : 'Searching...'}}</text>
+    </view>
+
+    <block wx:if="{{!loading}}">
+      <!-- 景点结果 -->
+      <view class="result-group" wx:if="{{scenicList.length > 0}}">
+        <view class="group-title">
+          <text class="title-icon">🏞️</text>
+          <text>{{lang === 'zh' ? '景点' : 'Attractions'}}</text>
+          <text class="count">({{scenicList.length}})</text>
+        </view>
+        <view class="result-list">
+          <view class="result-item" wx:for="{{scenicList}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}" data-type="scenic">
+            <image class="item-img" src="{{item.image}}" mode="aspectFill"/>
+            <view class="item-content">
+              <text class="item-name">{{item.name}}</text>
+              <view class="item-info">
+                <text class="item-rating">⭐ {{item.rating}}</text>
+                <text class="item-address">{{item.address}}</text>
+              </view>
+            </view>
+            <text class="item-arrow">›</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 美食结果 -->
+      <view class="result-group" wx:if="{{foodList.length > 0}}">
+        <view class="group-title">
+          <text class="title-icon">🍜</text>
+          <text>{{lang === 'zh' ? '美食' : 'Food'}}</text>
+          <text class="count">({{foodList.length}})</text>
+        </view>
+        <view class="result-list">
+          <view class="result-item" wx:for="{{foodList}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}" data-type="food">
+            <image class="item-img" src="{{item.image}}" mode="aspectFill"/>
+            <view class="item-content">
+              <text class="item-name">{{item.name}}</text>
+              <view class="item-info">
+                <text class="item-rating">⭐ {{item.rating}}</text>
+                <text class="item-price">¥{{item.price}}/{{lang === 'zh' ? '人' : 'person'}}</text>
+              </view>
+              <text class="item-address">{{item.address}}</text>
+            </view>
+            <text class="item-arrow">›</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 无结果 -->
+      <view class="empty" wx:if="{{scenicList.length === 0 && foodList.length === 0}}">
+        <text class="empty-icon">🔍</text>
+        <text class="empty-text">{{lang === 'zh' ? '未找到相关结果' : 'No results found'}}</text>
+        <text class="empty-tip">{{lang === 'zh' ? '换个关键词试试吧' : 'Try another keyword'}}</text>
+      </view>
+    </block>
+  </view>
+</view>

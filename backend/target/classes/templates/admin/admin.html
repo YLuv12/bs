@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
+<head>
+    <title>管理员管理</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header" style="margin-bottom: 24px;">
+            <h2 id="page-title" style="font-size: 20px; font-weight: 600; color: #333;">管理员管理</h2>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchKeyword" placeholder="用户名/昵称/手机号">
+                        <button class="btn btn-primary" onclick="loadData(1)">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+                            搜索
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearSearch()">清空</button>
+                    </div>
+                    <div class="action-btns">
+                        <button class="btn btn-primary" onclick="openAddModal()">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+                            新增
+                        </button>
+                        <button class="btn btn-danger" onclick="batchDelete()">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                            批量删除
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th width="50"><input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll('dataTable', this)"></th>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th>昵称</th>
+                                <th>手机号</th>
+                                <th>最后登录</th>
+                                <th>创建时间</th>
+                                <th width="150">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="8" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="scripts">
+        async function loadData(page) {
+            currentPage = page || 1;
+            const keyword = document.getElementById('searchKeyword').value;
+            
+            showLoading();
+            const result = await request('/admin/user/list?pageNum=' + currentPage + '&pageSize=10&keyword=' + encodeURIComponent(keyword));
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                const tbody = document.getElementById('tableBody');
+                if (result.data && result.data.records && result.data.records.length > 0) {
+                    let html = '';
+                    result.data.records.forEach(item => {
+                        html += '<tr>';
+                        html += '<td><input type="checkbox" class="checkbox row-checkbox" value="' + item.id + '" onchange="updateSelectAll()"></td>';
+                        html += '<td>' + item.id + '</td>';
+                        html += '<td>' + escapeHtml(item.username || '-') + '</td>';
+                        html += '<td>' + escapeHtml(item.nickname || '-') + '</td>';
+                        html += '<td>' + escapeHtml(item.phone || '-') + '</td>';
+                        html += '<td>' + formatDate(item.last_login_time) + '</td>';
+                        html += '<td>' + formatDate(item.create_time) + '</td>';
+                        html += '<td class="actions">';
+                        html += '<button class="action-btn edit" title="编辑" onclick="openEditModal(' + item.id + ')"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg></button>';
+                        html += '<button class="action-btn delete" title="删除" onclick="deleteItem(' + item.id + ')"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg></button>';
+                        html += '</td>';
+                        html += '</tr>';
+                    });
+                    tbody.innerHTML = html;
+                    renderPagination(document.getElementById('pagination'), currentPage, result.data.total, 10, 'loadData');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center">暂无数据</td></tr>';
+                    document.getElementById('pagination').innerHTML = '';
+                }
+            }
+        }
+        
+        function openAddModal() {
+            const content = `
+                <div class="form-group">
+                    <label class="form-label">用户名 <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="formUsername" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码 <span class="required">*</span></label>
+                    <input type="password" class="form-control" id="formPassword" placeholder="请输入密码">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">昵称</label>
+                        <input type="text" class="form-control" id="formNickname" placeholder="请输入昵称">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">手机号</label>
+                        <input type="text" class="form-control" id="formPhone" placeholder="请输入手机号">
+                    </div>
+                </div>
+            `;
+            
+            const footer = `
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitAdd()">确定</button>
+            `;
+            
+            openModal('新增管理员', content, footer);
+        }
+        
+        async function openEditModal(id) {
+            showLoading();
+            const result = await request('/admin/user/detail/' + id);
+            hideLoading();
+            
+            if (!result || result.code !== 200) {
+                showToast(result?.msg || '获取数据失败', 'error');
+                return;
+            }
+            
+            const data = result.data;
+            
+            const content = `
+                <input type="hidden" id="formId" value="${data.id}">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-control" id="formUsername" value="${escapeHtml(data.username || '')}" disabled>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">新密码 <span style="color: #999; font-size: 12px;">(留空则不修改)</span></label>
+                    <input type="password" class="form-control" id="formPassword" placeholder="请输入新密码">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">昵称</label>
+                        <input type="text" class="form-control" id="formNickname" value="${escapeHtml(data.nickname || '')}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">手机号</label>
+                        <input type="text" class="form-control" id="formPhone" value="${escapeHtml(data.phone || '')}">
+                    </div>
+                </div>
+            `;
+            
+            const footer = `
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitUpdate()">确定</button>
+            `;
+            
+            openModal('编辑管理员', content, footer);
+        }
+        
+        async function submitAdd() {
+            const username = document.getElementById('formUsername').value.trim();
+            const password = document.getElementById('formPassword').value;
+            const nickname = document.getElementById('formNickname').value.trim();
+            const phone = document.getElementById('formPhone').value.trim();
+            
+            if (!username) {
+                showToast('请输入用户名', 'error');
+                return;
+            }
+            if (!password) {
+                showToast('请输入密码', 'error');
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/user/add', {
+                method: 'POST',
+                body: JSON.stringify({ username, password, nickname, phone })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('添加成功', 'success');
+                closeModal();
+                loadData(1);
+            } else {
+                showToast(result?.msg || '添加失败', 'error');
+            }
+        }
+        
+        async function submitUpdate() {
+            const id = document.getElementById('formId').value;
+            const password = document.getElementById('formPassword').value;
+            const nickname = document.getElementById('formNickname').value.trim();
+            const phone = document.getElementById('formPhone').value.trim();
+            
+            showLoading();
+            const result = await request('/admin/user/update', {
+                method: 'POST',
+                body: JSON.stringify({ id, password, nickname, phone })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('修改成功', 'success');
+                closeModal();
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '修改失败', 'error');
+            }
+        }
+        
+        async function deleteItem(id) {
+            if (!confirm('确定要删除该管理员吗？')) {
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/user/delete', {
+                method: 'POST',
+                body: JSON.stringify({ id: id })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('删除成功', 'success');
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '删除失败', 'error');
+            }
+        }
+        
+        async function batchDelete() {
+            const ids = getSelectedIds('dataTable');
+            if (ids.length === 0) {
+                showToast('请选择要删除的数据', 'warning');
+                return;
+            }
+            
+            if (!confirm('确定要删除选中的 ' + ids.length + ' 条数据吗？')) {
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/user/delete', {
+                method: 'POST',
+                body: JSON.stringify({ id: ids })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('删除成功', 'success');
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '删除失败', 'error');
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchKeyword').value = '';
+            loadData(1);
+        }
+        
+        function updateSelectAll() {
+            const table = document.getElementById('dataTable');
+            const allCheckboxes = table.querySelectorAll('tbody .row-checkbox');
+            const checkedCheckboxes = table.querySelectorAll('tbody .row-checkbox:checked');
+            document.getElementById('selectAll').checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCheckboxes.length;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, calling loadData...');
+            loadData(1);
+        });
+    </script>
+</body>
+</html>

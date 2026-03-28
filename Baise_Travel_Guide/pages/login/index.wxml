@@ -1,0 +1,130 @@
+<view class="login-page">
+  <view class="login-header">
+    <view class="logo">
+      <text class="logo-icon">🏔️</text>
+    </view>
+    <view class="app-name">百色旅游指南</view>
+    <view class="app-slogan">探索百色，发现美好</view>
+  </view>
+
+  <view class="login-tabs" wx:if="{{!isRegister}}">
+    <view class="tab-item {{loginType === 'wechat' ? 'active' : ''}}" bindtap="switchType" data-type="wechat">
+      <text class="tab-icon">💬</text>
+      <text>微信登录</text>
+    </view>
+    <view class="tab-item {{loginType === 'account' ? 'active' : ''}}" bindtap="switchType" data-type="account">
+      <text class="tab-icon">👤</text>
+      <text>账号登录</text>
+    </view>
+  </view>
+
+  <!-- 微信登录 - 使用新版API -->
+  <view class="login-content" wx:if="{{loginType === 'wechat' && !isRegister}}">
+    <!-- 未同意协议时显示普通按钮 -->
+    <button class="wechat-btn" bindtap="onWechatLoginTap" wx:if="{{!agreed}}">
+      <text class="btn-icon">💬</text>
+      <text>微信一键登录</text>
+    </button>
+    <!-- 已同意协议时显示选择头像按钮 -->
+    <button class="wechat-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" wx:else>
+      <text class="btn-icon">💬</text>
+      <text>微信一键登录</text>
+    </button>
+    <view class="login-tip">点击登录将获取您的头像和昵称</view>
+    
+    <view class="agreement">
+      <view class="checkbox {{agreed ? 'checked' : ''}}" bindtap="toggleAgree">
+        <text wx:if="{{agreed}}">✓</text>
+      </view>
+      <text class="agreement-text">我已阅读并同意</text>
+      <text class="agreement-link" bindtap="goToUserProtocol">《用户协议》</text>
+      <text class="agreement-text">和</text>
+      <text class="agreement-link" bindtap="goToPrivacyPolicy">《隐私政策》</text>
+    </view>
+  </view>
+
+  <!-- 账号登录/注册 -->
+  <view class="login-content" wx:if="{{loginType === 'account' || isRegister}}">
+    <view class="form-item">
+      <view class="form-label">手机号</view>
+      <input class="form-input {{phoneError ? 'error' : ''}}" type="number" placeholder="请输入手机号" value="{{phone}}" bindinput="onPhoneInput" maxlength="11"/>
+      <view class="error-tip {{phoneError ? 'show' : ''}}">{{phoneError}}</view>
+    </view>
+    
+    <view class="form-item">
+      <view class="form-label">密码</view>
+      <view class="password-input">
+        <input class="form-input {{passwordError ? 'error' : ''}}" password="{{!showPassword}}" placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" maxlength="16"/>
+        <text class="toggle-pwd" bindtap="toggleShowPassword">{{showPassword ? '👁️' : '👁️‍🗨️'}}</text>
+      </view>
+      <view class="error-tip {{passwordError ? 'show' : ''}}">{{passwordError}}</view>
+      
+      <view class="pwd-strength-wrap" wx:if="{{isRegister && password}}">
+        <view class="pwd-strength {{pwdStrength}}">
+          <view class="strength-bar">
+            <view class="bar-item {{pwdStrength === 'weak' || pwdStrength === 'middle' || pwdStrength === 'strong' ? 'active' : ''}}"></view>
+            <view class="bar-item {{pwdStrength === 'middle' || pwdStrength === 'strong' ? 'active' : ''}}"></view>
+            <view class="bar-item {{pwdStrength === 'strong' ? 'active' : ''}}"></view>
+          </view>
+          <text class="strength-text" style="color: {{pwdStrengthColor}}">{{pwdStrengthText}}</text>
+        </view>
+      </view>
+      <view class="form-tip" wx:if="{{isRegister}}">密码需8-16位，包含大小写字母和数字</view>
+    </view>
+
+    <view class="form-item" wx:if="{{isRegister}}">
+      <view class="form-label">确认密码</view>
+      <view class="password-input">
+        <input class="form-input {{confirmError ? 'error' : ''}}" password="{{!showConfirmPassword}}" placeholder="请再次输入密码" value="{{confirmPassword}}" bindinput="onConfirmPasswordInput" maxlength="16"/>
+        <text class="toggle-pwd" bindtap="toggleShowConfirmPassword">{{showConfirmPassword ? '👁️' : '👁️‍🗨️'}}</text>
+      </view>
+      <view class="error-tip {{confirmError ? 'show' : ''}}">{{confirmError}}</view>
+    </view>
+
+    <view class="agreement">
+      <view class="checkbox {{agreed ? 'checked' : ''}}" bindtap="toggleAgree">
+        <text wx:if="{{agreed}}">✓</text>
+      </view>
+      <text class="agreement-text">我已阅读并同意</text>
+      <text class="agreement-link" bindtap="goToUserProtocol">《用户协议》</text>
+      <text class="agreement-text">和</text>
+      <text class="agreement-link" bindtap="goToPrivacyPolicy">《隐私政策》</text>
+    </view>
+
+    <button class="submit-btn {{agreed ? '' : 'disabled'}}" bindtap="{{isRegister ? 'register' : 'accountLogin'}}" loading="{{loading}}" disabled="{{!agreed}}">
+      {{isRegister ? '注册' : '登录'}}
+    </button>
+
+    <view class="switch-register" bindtap="toggleRegister">
+      {{isRegister ? '已有账号？去登录' : '没有账号？去注册'}}
+    </view>
+  </view>
+
+  <!-- 昵称选择弹窗 -->
+  <view class="nickname-picker {{showNicknamePicker ? 'show' : ''}}" catchtouchmove="true">
+    <view class="picker-mask" bindtap="hideNicknamePicker"></view>
+    <view class="picker-content">
+      <view class="picker-header">
+        <text class="picker-title">设置昵称</text>
+        <text class="picker-close" bindtap="hideNicknamePicker">×</text>
+      </view>
+      
+      <!-- 已选头像预览 -->
+      <view class="picker-avatar-preview">
+        <image class="avatar-img" src="{{selectedAvatar}}" mode="aspectFill"/>
+        <text class="avatar-tip">已选择的头像</text>
+      </view>
+      
+      <!-- 昵称输入 - 使用新版type="nickname" -->
+      <view class="nickname-input-row">
+        <input class="nickname-input" type="nickname" placeholder="请输入昵称（可获取微信昵称）" value="{{selectedNickname}}" bindinput="onNicknameInput" maxlength="20"/>
+      </view>
+      
+      <!-- 操作按钮 -->
+      <view class="picker-actions">
+        <button class="picker-btn cancel" bindtap="hideNicknamePicker">取消</button>
+        <button class="picker-btn confirm" bindtap="confirmNickname" loading="{{loading}}">确认登录</button>
+      </view>
+    </view>
+  </view>
+</view>

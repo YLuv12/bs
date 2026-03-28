@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
+<head>
+    <title>个人信息</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header" style="margin-bottom: 24px;">
+            <h2 id="page-title" style="font-size: 20px; font-weight: 600; color: #333;">个人信息</h2>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">基本资料</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-control" id="formUsername" th:value="${admin?.username}" disabled>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">昵称</label>
+                        <input type="text" class="form-control" id="formNickname" th:value="${admin?.nickname}" placeholder="请输入昵称">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">手机号</label>
+                        <input type="text" class="form-control" id="formPhone" th:value="${admin?.phone}" placeholder="请输入手机号">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">最后登录时间</label>
+                    <input type="text" class="form-control" th:value="${admin?.last_login_time}" disabled>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="updateProfile()">保存修改</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header">
+                <h3 class="card-title">修改密码</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">原密码</label>
+                    <input type="password" class="form-control" id="oldPassword" placeholder="请输入原密码">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">新密码</label>
+                    <input type="password" class="form-control" id="newPassword" placeholder="请输入新密码">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">确认新密码</label>
+                    <input type="password" class="form-control" id="confirmPassword" placeholder="请再次输入新密码">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="updatePassword()">修改密码</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="scripts">
+        async function updateProfile() {
+            const nickname = document.getElementById('formNickname').value.trim();
+            const phone = document.getElementById('formPhone').value.trim();
+            
+            showLoading();
+            const result = await request('/admin/auth/updateProfile', {
+                method: 'POST',
+                body: JSON.stringify({ nickname, phone })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('修改成功', 'success');
+            } else {
+                showToast(result?.msg || '修改失败', 'error');
+            }
+        }
+        
+        async function updatePassword() {
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!oldPassword) {
+                showToast('请输入原密码', 'error');
+                return;
+            }
+            if (!newPassword) {
+                showToast('请输入新密码', 'error');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showToast('两次输入的密码不一致', 'error');
+                return;
+            }
+            if (newPassword.length < 6) {
+                showToast('密码长度不能少于6位', 'error');
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/auth/updatePassword', {
+                method: 'POST',
+                body: JSON.stringify({ oldPassword, newPassword })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('密码修改成功', 'success');
+                document.getElementById('oldPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            } else {
+                showToast(result?.msg || '密码修改失败', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

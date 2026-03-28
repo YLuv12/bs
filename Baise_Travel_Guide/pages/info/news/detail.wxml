@@ -1,0 +1,18 @@
+<view class="page" wx:if="{{!loading && detail}}">
+  <image class="cover" src="{{detail.image}}" mode="aspectFill"/>
+  <view class="content">
+    <view class="title">{{lang === 'zh' ? detail.title : detail.titleEn}}</view>
+    <view class="meta">
+      <text>{{detail.author}}</text>
+      <text>{{detail.publishTime}}</text>
+      <text>{{detail.viewCount}}{{lang === 'zh' ? '人浏览' : ' views'}}</text>
+    </view>
+    <view class="tags" wx:if="{{detail.tags}}">
+      <text class="tag" wx:for="{{detail.tags.split(',')}}" wx:key="index">{{item}}</text>
+    </view>
+    <view class="article">
+      <rich-text nodes="{{detail.content}}"></rich-text>
+    </view>
+  </view>
+</view>
+<view class="loading" wx:if="{{loading}}">{{lang === 'zh' ? '加载中...' : 'Loading...'}}</view>

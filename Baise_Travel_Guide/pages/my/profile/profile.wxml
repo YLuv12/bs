@@ -1,0 +1,52 @@
+<view class="page" wx:if="{{!loading}}">
+  <view class="avatar-section" bindtap="chooseAvatar">
+    <image class="avatar" src="{{avatar || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'}}" mode="aspectFill"/>
+    <text class="avatar-tip">{{lang === 'zh' ? '点击更换头像' : 'Tap to change'}}</text>
+  </view>
+
+  <view class="form">
+    <view class="form-item">
+      <text class="form-label">{{lang === 'zh' ? '昵称' : 'Nickname'}}<text class="required">*</text></text>
+      <input class="form-input" value="{{nickname}}" placeholder="{{lang === 'zh' ? '请输入昵称' : 'Enter nickname'}}" bindinput="onNicknameInput" maxlength="20"/>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">{{lang === 'zh' ? '性别' : 'Gender'}}</text>
+      <picker mode="selector" range="{{genderOptions}}" range-key="{{lang === 'zh' ? 'label' : 'labelEn'}}" value="{{genderIndex}}" bindchange="onGenderChange">
+        <view class="picker-input">
+          <text class="picker-value">{{genderOptions[genderIndex][lang === 'zh' ? 'label' : 'labelEn']}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">{{lang === 'zh' ? '年龄' : 'Age'}}</text>
+      <picker mode="selector" range="{{ageOptions}}" value="{{ageIndex}}" bindchange="onAgeChange">
+        <view class="picker-input">
+          <text class="picker-value">{{ageOptions[ageIndex]}}{{lang === 'zh' ? '岁' : ' years old'}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">{{lang === 'zh' ? '联系方式' : 'Phone'}}</text>
+      <input class="form-input" type="number" value="{{phone}}" placeholder="{{lang === 'zh' ? '请输入手机号' : 'Enter phone'}}" bindinput="onPhoneInput" maxlength="11"/>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">{{lang === 'zh' ? '个人简介' : 'Bio'}}</text>
+      <textarea class="form-textarea" value="{{intro}}" placeholder="{{lang === 'zh' ? '介绍一下自己吧...' : 'Tell us about yourself...'}}" bindinput="onIntroInput" maxlength="200" auto-height/>
+      <text class="char-count">{{intro.length}}/200</text>
+    </view>
+  </view>
+
+  <button class="save-btn" bindtap="save" loading="{{loading}}">
+    {{lang === 'zh' ? '保存' : 'Save'}}
+  </button>
+</view>
+
+<view class="loading-page" wx:if="{{loading}}">
+  <text>{{lang === 'zh' ? '加载中...' : 'Loading...'}}</text>
+</view>

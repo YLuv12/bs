@@ -1,0 +1,37 @@
+<view class="page">
+  <view class="rating-section">
+    <view class="rating-label">{{lang === 'zh' ? '您的评分' : 'Your Rating'}}</view>
+    <view class="rating-stars">
+      <text class="star {{index < rating ? 'active' : ''}}" wx:for="{{5}}" wx:key="index" bindtap="setRating" data-rating="{{index + 1}}">★</text>
+    </view>
+    <text class="rating-text" wx:if="{{rating}}">{{rating}}.0 {{lang === 'zh' ? '分' : 'points'}}</text>
+  </view>
+
+  <view class="section">
+    <view class="section-label">{{lang === 'zh' ? '添加标签' : 'Tags'}}</view>
+    <view class="tags">
+      <view class="tag {{tags.indexOf(item.value) > -1 ? 'active' : ''}}" wx:for="{{availableTags}}" wx:key="value" bindtap="toggleTag" data-value="{{item.value}}">{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-label">{{lang === 'zh' ? '评论内容' : 'Content'}}</view>
+    <textarea class="content-input" placeholder="{{lang === 'zh' ? '分享您的体验...' : 'Share your experience...'}}" value="{{content}}" bindinput="onContentInput" maxlength="500"/>
+    <view class="word-count">{{content.length}}/500</view>
+  </view>
+
+  <view class="section">
+    <view class="section-label">{{lang === 'zh' ? '添加图片' : 'Images'}} ({{lang === 'zh' ? '选填' : 'Optional'}})</view>
+    <view class="images">
+      <view class="image-item" wx:for="{{images}}" wx:key="index">
+        <image class="preview" src="{{item}}" mode="aspectFill"/>
+        <view class="remove" bindtap="removeImage" data-index="{{index}}">×</view>
+      </view>
+      <view class="image-item add" wx:if="{{images.length < 3}}" bindtap="chooseImage">
+        <text class="add-icon">+</text>
+      </view>
+    </view>
+  </view>
+
+  <button class="submit-btn" bindtap="submit" loading="{{submitting}}">{{lang === 'zh' ? '提交评论' : 'Submit'}}</button>
+</view>

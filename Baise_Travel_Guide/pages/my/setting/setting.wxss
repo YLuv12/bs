@@ -1,0 +1,9 @@
+.page { min-height: 100vh; background: var(--bg-gray); }
+.section { background: var(--bg); margin: 20rpx; border-radius: 20rpx; overflow: hidden; }
+.item { display: flex; align-items: center; padding: 30rpx; border-bottom: 1rpx solid var(--border); }
+.item:last-child { border-bottom: none; }
+.item-icon { font-size: 40rpx; margin-right: 20rpx; }
+.item-name { flex: 1; font-size: 30rpx; color: var(--text); }
+.item-value { font-size: 26rpx; color: var(--text-light); margin-right: 10rpx; }
+.item-arrow { font-size: 32rpx; color: var(--text-light); }
+.logout-btn { margin: 40rpx 20rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; background: var(--bg); border-radius: 44rpx; font-size: 30rpx; color: var(--primary); }

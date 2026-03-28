@@ -1,0 +1,19 @@
+.page { width: 100vw; height: 100vh; position: relative; }
+.map { width: 100%; height: 100%; }
+.controls { position: absolute; right: 30rpx; bottom: 200rpx; display: flex; flex-direction: column; gap: 20rpx; }
+.control-btn { width: 80rpx; height: 80rpx; background: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4rpx 20rpx var(--shadow); }
+.control-icon { font-size: 36rpx; }
+.nearby-panel { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 24rpx 24rpx 0 0; max-height: 60vh; transform: translateY(100%); transition: transform 0.3s ease; }
+.nearby-panel.show { transform: translateY(0); }
+.nearby-header { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 30rpx; border-bottom: 1rpx solid var(--border); }
+.nearby-tabs { display: flex; gap: 20rpx; }
+.tab { padding: 12rpx 24rpx; font-size: 26rpx; color: var(--text-secondary); background: var(--bg-gray); border-radius: 20rpx; }
+.tab.active { background: var(--primary); color: #FFF; }
+.close-btn { font-size: 36rpx; color: var(--text-light); padding: 10rpx; }
+.nearby-list { max-height: 50vh; padding: 20rpx; }
+.nearby-item { display: flex; justify-content: space-between; padding: 20rpx; background: var(--bg-gray); border-radius: 12rpx; margin-bottom: 16rpx; }
+.nearby-info { flex: 1; }
+.nearby-name { font-size: 28rpx; font-weight: 500; color: var(--text); margin-bottom: 8rpx; }
+.nearby-address { font-size: 24rpx; color: var(--text-light); }
+.nearby-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; font-size: 24rpx; color: var(--text-light); }
+.nearby-meta text:first-child { color: #FFB800; }

@@ -1,0 +1,181 @@
+<view class="page" wx:if="{{!loading && detail}}">
+  <swiper class="banner" indicator-dots autoplay circular interval="4000" duration="500">
+    <swiper-item wx:for="{{detail.images}}" wx:key="index">
+      <image class="banner-img" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}"/>
+    </swiper-item>
+  </swiper>
+
+  <view class="main-info">
+    <view class="title-row">
+      <view class="title">{{lang === 'zh' ? detail.name_cn : detail.name_en}}</view>
+      <view class="action-btns">
+        <view class="action-btn" bindtap="toggleFavorite">
+          <text class="action-icon">{{isFavorite ? '★' : '☆'}}</text>
+          <text>{{isFavorite ? (lang === 'zh' ? '已收藏' : 'Favorited') : (lang === 'zh' ? '收藏' : 'Favorite')}}</text>
+        </view>
+        <view class="action-btn" bindtap="toggleShare">
+          <text class="action-icon">↗</text>
+          <text>{{lang === 'zh' ? '分享' : 'Share'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="tags">
+      <text class="tag" wx:if="{{detail.type_cn}}">{{lang === 'zh' ? detail.type_cn : detail.type_en}}</text>
+      <text class="tag grade" wx:if="{{detail.grade_cn}}">{{lang === 'zh' ? detail.grade_cn : detail.grade_en}}</text>
+    </view>
+
+    <view class="stats">
+      <view class="stat-item">
+        <view class="rating-stars">
+          <text class="star" wx:for="{{5}}" wx:key="index" wx:for-item="star">{{index < detail.avg_score ? '★' : '☆'}}</text>
+        </view>
+        <text class="rating-num">{{detail.avg_score}}</text>
+        <text class="rating-count">{{detail.score_count}}{{lang === 'zh' ? '人评分' : ' ratings'}}</text>
+      </view>
+      <view class="stat-item">
+        <text>{{detail.collect_count}}{{lang === 'zh' ? '人收藏' : ' favorites'}}</text>
+      </view>
+      <view class="stat-item">
+        <text>{{detail.visit_count}}{{lang === 'zh' ? '人浏览' : ' views'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="info-list">
+      <view class="info-item" bindtap="copyAddress">
+        <text class="info-icon">📍</text>
+        <view class="info-content">
+          <text class="info-label">{{lang === 'zh' ? '地址： ' : 'Address'}}</text>
+          <text class="info-value">{{lang === 'zh' ? detail.address_cn : detail.address_en}}</text>
+        </view>
+        <text class="info-action">{{lang === 'zh' ? '复制' : 'Copy'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-icon">🕐</text>
+        <view class="info-content">
+          <text class="info-label">{{lang === 'zh' ? '开放时间： ' : 'Opening Hours'}}</text>
+          <text class="info-value">{{lang === 'zh' ? detail.open_time_cn : detail.open_time_en}}</text>
+        </view>
+      </view>
+      <view class="info-item">
+        <text class="info-icon">🎫</text>
+        <view class="info-content">
+          <text class="info-label">{{lang === 'zh' ? '门票：' : 'Ticket'}}</text>
+          <text class="info-value price">{{lang === 'zh' ? detail.ticket_info_cn : detail.ticket_info_en}}</text>
+        </view>
+      </view>
+      <view class="info-item">
+        <text class="info-icon">⏱️</text>
+        <view class="info-content">
+          <text class="info-label">{{lang === 'zh' ? '建议游玩：' : 'Duration'}}</text>
+          <text class="info-value">{{lang === 'zh' ? detail.play_time_cn : detail.play_time_en}}</text>
+        </view>
+      </view>
+      <view class="info-item" bindtap="callPhone" wx:if="{{detail.phone}}">
+        <text class="info-icon">📞</text>
+        <view class="info-content">
+          <text class="info-label">{{lang === 'zh' ? '联系电话： ' : 'Phone'}}</text>
+          <text class="info-value">{{detail.phone}}</text>
+        </view>
+        <text class="info-action">{{lang === 'zh' ? '拨打' : 'Call'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">{{lang === 'zh' ? '景点介绍' : 'Introduction'}}</text>
+    </view>
+    <view class="description">{{lang === 'zh' ? detail.desc_cn : detail.desc_en}}</view>
+  </view>
+
+  <view class="section" wx:if="{{detail.strategy_cn || detail.strategy_en}}">
+    <view class="section-header">
+      <text class="section-title">{{lang === 'zh' ? '游玩攻略' : 'Travel Tips'}}</text>
+    </view>
+    <view class="tips">{{lang === 'zh' ? detail.strategy_cn : detail.strategy_en}}</view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">{{lang === 'zh' ? '我的评分' : 'My Rating'}}</text>
+    </view>
+    <view class="rating-row">
+      <view class="rating-stars interactive">
+        <text class="star {{index < userRating ? 'active' : ''}}" wx:for="{{5}}" wx:key="index" bindtap="setRating" data-rating="{{index + 1}}">★</text>
+      </view>
+      <text class="rating-text" wx:if="{{userRating}}">{{userRating}}.0</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">{{lang === 'zh' ? '用户评论' : 'Reviews'}} ({{comments.length}})</text>
+      <view class="section-action" bindtap="goToComment">{{lang === 'zh' ? '写评论' : 'Write Review'}}</view>
+    </view>
+    <view class="comments" wx:if="{{comments.length > 0}}">
+      <view class="comment-item" wx:for="{{comments}}" wx:key="id">
+        <image class="comment-avatar" src="{{item.avatar}}"/>
+        <view class="comment-content">
+          <view class="comment-header">
+            <text class="comment-name">{{item.userName}}</text>
+            <view class="comment-rating">
+              <text class="star" wx:for="{{5}}" wx:key="index" wx:for-item="star">{{index < item.rating ? '★' : '☆'}}</text>
+            </view>
+          </view>
+          <view class="comment-text">{{item.content}}</view>
+          <view class="comment-footer">
+            <text class="comment-time">{{item.time}}</text>
+            <view class="comment-like">
+              <text>👍</text>
+              <text>{{item.likeCount}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="empty-comment" wx:else>
+      <text>{{lang === 'zh' ? '暂无评论，快来抢沙发～' : 'No reviews yet, be the first～'}}</text>
+    </view>
+  </view>
+
+  <view class="bottom-bar safe-area-bottom">
+    <view class="bar-btn {{isPunched ? 'done' : ''}}" bindtap="togglePunch">
+      <text class="bar-icon">{{isPunched ? '✓' : '📍'}}</text>
+      <text>{{isPunched ? (lang === 'zh' ? '已打卡' : 'Checked In') : (lang === 'zh' ? '打卡' : 'Check In')}}</text>
+    </view>
+    <view class="bar-btn {{isLiked ? 'active' : ''}}" bindtap="toggleLike">
+      <text class="bar-icon">{{isLiked ? '❤️' : '🤍'}}</text>
+      <text>{{lang === 'zh' ? '点赞' : 'Like'}}</text>
+    </view>
+    <button class="nav-btn" bindtap="openNavigation">
+      <text class="nav-icon">🧭</text>
+      <text>{{lang === 'zh' ? '导航' : 'Navigate'}}</text>
+    </button>
+  </view>
+
+  <view class="back-top {{showBackTop ? 'show' : 'hide'}} animate-blink" bindtap="goToTop">
+    <image src="/images/icon/top.png" class="back-top-icon"/>
+  </view>
+
+  <view class="share-panel {{showShare ? 'show' : ''}}" catchtouchmove="true">
+    <view class="share-mask" bindtap="toggleShare"></view>
+    <view class="share-content">
+      <view class="share-item" open-type="share">
+        <text class="share-icon">💬</text>
+        <text>{{lang === 'zh' ? '分享给好友' : 'Share to Friends'}}</text>
+      </view>
+      <view class="share-item" bindtap="toggleShare">
+        <text class="share-icon">🖼️</text>
+        <text>{{lang === 'zh' ? '分享到朋友圈' : 'Share to Moments'}}</text>
+      </view>
+      <view class="share-cancel" bindtap="toggleShare">{{lang === 'zh' ? '取消' : 'Cancel'}}</view>
+    </view>
+  </view>
+</view>
+
+<view class="loading-page" wx:if="{{loading}}">
+  <text>{{lang === 'zh' ? '加载中...' : 'Loading...'}}</text>
+</view>

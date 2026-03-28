@@ -1,0 +1,172 @@
+<view class="page">
+  <view class="header">
+    <view class="header-top">
+      <view class="logo-area">
+        <view class="title-group">
+          <text class="app-title">{{lang === 'zh' ? '百色旅游指南' : 'Baise Travel'}}</text>
+          <text class="app-subtitle">{{lang === 'zh' ? '探索红色圣地 · 品味壮乡风情' : 'Explore Red Holy Land'}}</text>
+        </view>
+      </view>
+      <view class="lang-btn" bindtap="toggleLang">
+        <text class="lang-icon">🌐</text>
+        <text class="lang-text">{{lang === 'zh' ? 'EN' : '中文'}}</text>
+      </view>
+    </view>
+    <view class="search-bar" bindtap="goToSearch">
+      <view class="search-icon-wrap">
+        <text class="search-icon">🔍</text>
+      </view>
+      <text class="search-placeholder">{{lang === 'zh' ? '搜索景点、美食、资讯...' : 'Search attractions, food...'}}</text>
+    </view>
+  </view>
+
+  <swiper class="banner" indicator-dots autoplay circular interval="4000" duration="500" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#FFFFFF">
+    <swiper-item wx:for="{{bannerList}}" wx:key="id" bindtap="onBannerTap" data-id="{{item.id}}" data-type="{{item.type}}">
+      <view class="banner-item">
+        <image class="banner-img" src="{{item.cover_img}}" mode="aspectFill"/>
+        <view class="banner-mask"></view>
+        <view class="banner-info">
+          <view class="banner-type {{item.type === 'scenic' ? 'type-scenic' : 'type-food'}}">
+            {{item.type === 'scenic' ? (lang === 'zh' ? '景点' : 'Attraction') : (lang === 'zh' ? '美食' : 'Food')}}
+          </view>
+          <text class="banner-name">{{lang === 'zh' ? item.name_cn : item.name_en}}</text>
+        </view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <view class="section">
+    <view class="section-header">
+      <view class="section-title">
+        <text class="title-icon">🏞️</text>
+        <text class="title-text">{{lang === 'zh' ? '热门景点' : 'Hot Attractions'}}</text>
+      </view>
+      <view class="section-more" bindtap="goToAttractionList">
+        <text>{{lang === 'zh' ? '更多' : 'More'}}</text>
+        <text>›</text>
+      </view>
+    </view>
+    <scroll-view class="scroll-list" scroll-x enable-flex>
+      <view class="attraction-card" wx:for="{{attractionList}}" wx:key="id" bindtap="goToAttractionDetail" data-id="{{item.id}}">
+        <view class="card-img-wrap">
+          <image class="card-img" src="{{item.cover_img}}" mode="aspectFill" lazy-load/>
+          <view class="card-rating">
+            <text class="rating-star">★</text>
+            <text class="rating-num">{{item.avg_score}}</text>
+          </view>
+        </view>
+        <view class="card-content">
+          <text class="card-title">{{lang === 'zh' ? item.name_cn : item.name_en}}</text>
+          <view class="card-meta">
+            <text class="meta-item" wx:if="{{item.distanceText}}">🚶 {{item.distanceText}}</text>
+            <text class="meta-item">{{item.address}}</text>
+          </view>
+          <view class="card-stats">
+            <text class="stat-item">👁 {{item.visit_count}}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <view class="section-title">
+        <text class="title-icon">🍜</text>
+        <text class="title-text">{{lang === 'zh' ? '特色美食' : 'Local Food'}}</text>
+      </view>
+      <view class="section-more" bindtap="goToFoodList">
+        <text>{{lang === 'zh' ? '更多' : 'More'}}</text>
+        <text>›</text>
+      </view>
+    </view>
+    <view class="food-grid">
+      <view class="food-card" wx:for="{{foodList}}" wx:key="id" bindtap="goToFoodDetail" data-id="{{item.id}}">
+        <view class="food-img-wrap">
+          <image class="food-img" src="{{item.cover_img}}" mode="aspectFill" lazy-load/>
+          <view class="food-rating-badge">
+            <text class="star">★</text>
+            <text class="num">{{item.avg_score}}</text>
+          </view>
+        </view>
+        <view class="food-content">
+          <text class="food-title">{{lang === 'zh' ? item.name_cn : item.name_en}}</text>
+          <view class="food-info">
+            <text class="food-distance" wx:if="{{item.distanceText}}">🚶 {{item.distanceText}}</text>
+            <text class="food-price">¥{{item.per_capita}}/{{lang === 'zh' ? '人' : 'person'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section" wx:if="{{recommendList.length > 0}}">
+    <view class="section-header">
+      <view class="section-title">
+        <text class="title-icon">💡</text>
+        <text class="title-text">{{lang === 'zh' ? '猜你喜欢' : 'Recommend'}}</text>
+      </view>
+    </view>
+    <view class="recommend-list">
+      <view class="recommend-item" wx:for="{{recommendList}}" wx:key="id" bindtap="{{item.type === 'scenic' ? 'goToAttractionDetail' : 'goToFoodDetail'}}" data-id="{{item.id}}">
+        <view class="recommend-img-wrap">
+          <image class="recommend-img" src="{{item.cover_img}}" mode="aspectFill" lazy-load/>
+          <view class="recommend-type {{item.type === 'scenic' ? 'type-scenic' : 'type-food'}}">
+            {{item.type === 'scenic' ? (lang === 'zh' ? '景点' : 'Attraction') : (lang === 'zh' ? '美食' : 'Food')}}
+          </view>
+        </view>
+        <view class="recommend-content">
+          <text class="recommend-title">{{lang === 'zh' ? item.name_cn : item.name_en}}</text>
+          <view class="recommend-meta">
+            <view class="meta-item">
+              <text class="meta-icon">⭐</text>
+              <text class="meta-value">{{item.avg_score}}</text>
+            </view>
+            <view class="meta-item">
+              <text class="meta-icon">👁</text>
+              <text class="meta-value">{{item.visit_count}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <view class="section-title">
+        <text class="title-icon">📰</text>
+        <text class="title-text">{{lang === 'zh' ? '文旅资讯' : 'Travel News'}}</text>
+      </view>
+    </view>
+    <view class="news-list">
+      <view class="news-item" wx:for="{{newsList}}" wx:key="id" bindtap="goToNewsDetail" data-id="{{item.id}}">
+        <image class="news-img" src="{{item.cover_img}}" mode="aspectFill"/>
+        <view class="news-content">
+          <text class="news-title">{{lang === 'zh' ? item.title_cn : item.title_en}}</text>
+          <view class="news-meta">
+            <text>👁 {{item.read_count}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="reach-bottom">
+    <view class="reach-bottom-line"></view>
+    <text class="reach-bottom-text">{{lang === 'zh' ? '已经到底啦～' : 'No more data'}}</text>
+    <view class="reach-bottom-line"></view>
+  </view>
+
+  <view class="float-btns">
+    <view class="news-btn" bindtap="goToPublishNews">
+      <view class="pen-icon">
+        <view class="pen-body"></view>
+        <view class="pen-tip"></view>
+      </view>
+    </view>
+    <view class="back-top {{showBackTop ? 'show' : 'hide'}}" bindtap="goToTop">
+      <view class="back-top-arrow"><text>↑</text></view>
+    </view>
+  </view>
+</view>

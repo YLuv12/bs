@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
+<head>
+    <title>操作日志</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header" style="margin-bottom: 24px;">
+            <h2 id="page-title" style="font-size: 20px; font-weight: 600; color: #333;">操作日志</h2>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchKeyword" placeholder="操作内容/IP地址">
+                        <select class="search-select" id="searchModule">
+                            <option value="">全部模块</option>
+                        </select>
+                        <input type="date" class="search-input" id="searchStartDate" style="width: 150px;">
+                        <input type="date" class="search-input" id="searchEndDate" style="width: 150px;">
+                        <button class="btn btn-primary" onclick="loadData(1)">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+                            搜索
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearSearch()">清空</button>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>操作人</th>
+                                <th>操作模块</th>
+                                <th>操作内容</th>
+                                <th>目标ID</th>
+                                <th>IP地址</th>
+                                <th>操作时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="scripts">
+        async function loadData(page) {
+            currentPage = page || 1;
+            const keyword = document.getElementById('searchKeyword').value;
+            const module = document.getElementById('searchModule').value;
+            const startDate = document.getElementById('searchStartDate').value;
+            const endDate = document.getElementById('searchEndDate').value;
+            
+            let url = '/admin/log/list?pageNum=' + currentPage + '&pageSize=10';
+            if (keyword) url += '&keyword=' + encodeURIComponent(keyword);
+            if (module) url += '&module=' + encodeURIComponent(module);
+            if (startDate) url += '&startDate=' + startDate;
+            if (endDate) url += '&endDate=' + endDate;
+            
+            showLoading();
+            const result = await request(url);
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                const tbody = document.getElementById('tableBody');
+                if (result.data && result.data.records && result.data.records.length > 0) {
+                    let html = '';
+                    result.data.records.forEach(item => {
+                        html += '<tr>';
+                        html += '<td>' + item.id + '</td>';
+                        html += '<td>' + escapeHtml(item.admin_name || '-') + '</td>';
+                        html += '<td>' + escapeHtml(item.module || '-') + '</td>';
+                        html += '<td>' + escapeHtml(item.operation || '-') + '</td>';
+                        html += '<td>' + (item.target_id || '-') + '</td>';
+                        html += '<td>' + escapeHtml(item.ip || '-') + '</td>';
+                        html += '<td>' + formatDate(item.create_time) + '</td>';
+                        html += '</tr>';
+                    });
+                    tbody.innerHTML = html;
+                    renderPagination(document.getElementById('pagination'), currentPage, result.data.total, 10, 'loadData');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">暂无数据</td></tr>';
+                    document.getElementById('pagination').innerHTML = '';
+                }
+            }
+        }
+        
+        async function loadModules() {
+            const result = await request('/admin/log/modules');
+            if (result && result.code === 200) {
+                const select = document.getElementById('searchModule');
+                result.data.forEach(module => {
+                    const option = document.createElement('option');
+                    option.value = module;
+                    option.textContent = module;
+                    select.appendChild(option);
+                });
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchKeyword').value = '';
+            document.getElementById('searchModule').value = '';
+            document.getElementById('searchStartDate').value = '';
+            document.getElementById('searchEndDate').value = '';
+            loadData(1);
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, calling loadData...');
+            loadModules();
+            loadData(1);
+        });
+    </script>
+</body>
+</html>

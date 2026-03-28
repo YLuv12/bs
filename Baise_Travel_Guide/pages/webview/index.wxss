@@ -1,0 +1,2 @@
+.page { min-height: 100vh; background: var(--bg); padding: 30rpx; }
+.content { font-size: 28rpx; color: var(--text-secondary); line-height: 1.8; white-space: pre-wrap; }

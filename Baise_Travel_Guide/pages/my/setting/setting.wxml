@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="section">
+    <view class="item" bindtap="switchLang">
+      <view class="item-icon">🌐</view>
+      <view class="item-name">{{lang === 'zh' ? '语言设置' : 'Language'}}</view>
+      <view class="item-value">{{lang === 'zh' ? '中文' : 'English'}}</view>
+      <text class="item-arrow">›</text>
+    </view>
+    <view class="item" bindtap="goToFeedbackRecord">
+      <view class="item-icon">📝</view>
+      <view class="item-name">{{lang === 'zh' ? '反馈记录' : 'Feedback Record'}}</view>
+      <text class="item-arrow">›</text>
+    </view>
+    <view class="item" bindtap="clearCache">
+      <view class="item-icon">🗑️</view>
+      <view class="item-name">{{lang === 'zh' ? '清除缓存' : 'Clear Cache'}}</view>
+      <view class="item-value">{{cacheSize}}</view>
+      <text class="item-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="item" bindtap="goToUserProtocol">
+      <view class="item-icon">📄</view>
+      <view class="item-name">{{lang === 'zh' ? '用户协议' : 'User Agreement'}}</view>
+      <text class="item-arrow">›</text>
+    </view>
+    <view class="item" bindtap="goToPrivacyPolicy">
+      <view class="item-icon">🔒</view>
+      <view class="item-name">{{lang === 'zh' ? '隐私政策' : 'Privacy Policy'}}</view>
+      <text class="item-arrow">›</text>
+    </view>
+    <view class="item">
+      <view class="item-icon">ℹ️</view>
+      <view class="item-name">{{lang === 'zh' ? '关于我们' : 'About Us'}}</view>
+      <view class="item-value">v1.0.0</view>
+    </view>
+  </view>
+
+  <view class="logout-btn" wx:if="{{isLoggedIn}}" bindtap="logout">
+    {{lang === 'zh' ? '退出登录' : 'Logout'}}
+  </view>
+</view>

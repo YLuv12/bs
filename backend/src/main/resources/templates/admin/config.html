@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
+<head>
+    <title>系统配置</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header" style="margin-bottom: 24px;">
+            <h2 id="page-title" style="font-size: 20px; font-weight: 600; color: #333;">系统配置</h2>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchKeyword" placeholder="配置键/名称">
+                        <select class="search-select" id="searchModule">
+                            <option value="">全部模块</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadData(1)">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+                            搜索
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearSearch()">清空</button>
+                    </div>
+                    <div class="action-btns">
+                        <button class="btn btn-primary" onclick="openAddModal()">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+                            新增
+                        </button>
+                        <button class="btn btn-danger" onclick="batchDelete()">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                            批量删除
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th width="50"><input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll('dataTable', this)"></th>
+                                <th>ID</th>
+                                <th>配置键</th>
+                                <th>配置名称</th>
+                                <th>配置值</th>
+                                <th>类型</th>
+                                <th>模块</th>
+                                <th>创建时间</th>
+                                <th width="150">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="9" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="scripts">
+        async function loadData(page) {
+            currentPage = page || 1;
+            const keyword = document.getElementById('searchKeyword').value;
+            const module = document.getElementById('searchModule').value;
+            
+            let url = '/admin/config/list?pageNum=' + currentPage + '&pageSize=10';
+            if (keyword) url += '&keyword=' + encodeURIComponent(keyword);
+            if (module) url += '&module=' + encodeURIComponent(module);
+            
+            showLoading();
+            const result = await request(url);
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                const tbody = document.getElementById('tableBody');
+                if (result.data && result.data.records && result.data.records.length > 0) {
+                    let html = '';
+                    result.data.records.forEach(item => {
+                        html += '<tr>';
+                        html += '<td><input type="checkbox" class="checkbox row-checkbox" value="' + item.id + '" onchange="updateSelectAll()"></td>';
+                        html += '<td>' + item.id + '</td>';
+                        html += '<td>' + escapeHtml(item.config_key || '-') + '</td>';
+                        html += '<td>' + escapeHtml(item.config_name || '-') + '</td>';
+                        html += '<td class="text-ellipsis" title="' + escapeHtml(item.config_value || '') + '">' + escapeHtml(item.config_value || '-') + '</td>';
+                        html += '<td>' + escapeHtml(item.config_type || '-') + '</td>';
+                        html += '<td>' + escapeHtml(item.module || '-') + '</td>';
+                        html += '<td>' + formatDate(item.create_time) + '</td>';
+                        html += '<td class="actions">';
+                        html += '<button class="action-btn edit" title="编辑" onclick="openEditModal(' + item.id + ')"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg></button>';
+                        html += '<button class="action-btn delete" title="删除" onclick="deleteItem(' + item.id + ')"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg></button>';
+                        html += '</td>';
+                        html += '</tr>';
+                    });
+                    tbody.innerHTML = html;
+                    renderPagination(document.getElementById('pagination'), currentPage, result.data.total, 10, 'loadData');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center">暂无数据</td></tr>';
+                    document.getElementById('pagination').innerHTML = '';
+                }
+            }
+        }
+        
+        async function loadModules() {
+            const result = await request('/admin/config/modules');
+            if (result && result.code === 200) {
+                const select = document.getElementById('searchModule');
+                result.data.forEach(module => {
+                    const option = document.createElement('option');
+                    option.value = module;
+                    option.textContent = module;
+                    select.appendChild(option);
+                });
+            }
+        }
+        
+        function openAddModal() {
+            const content = `
+                <div class="form-group">
+                    <label class="form-label">配置键 <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="formConfigKey" placeholder="如：upload_max_size">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">配置名称 <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="formConfigName" placeholder="如：文件上传最大大小">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">配置值 <span class="required">*</span></label>
+                    <textarea class="form-control form-textarea" id="formConfigValue" placeholder="请输入配置值"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">配置类型</label>
+                        <select class="form-control form-select" id="formConfigType">
+                            <option value="string">字符串</option>
+                            <option value="int">整数</option>
+                            <option value="boolean">布尔值</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">所属模块</label>
+                        <input type="text" class="form-control" id="formModule" placeholder="如：系统设置">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <textarea class="form-control form-textarea" id="formRemark" placeholder="请输入备注"></textarea>
+                </div>
+            `;
+            
+            const footer = `
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitAdd()">确定</button>
+            `;
+            
+            openModal('新增配置', content, footer);
+        }
+        
+        async function openEditModal(id) {
+            showLoading();
+            const result = await request('/admin/config/detail/' + id);
+            hideLoading();
+            
+            if (!result || result.code !== 200) {
+                showToast(result?.msg || '获取数据失败', 'error');
+                return;
+            }
+            
+            const data = result.data;
+            
+            const content = `
+                <input type="hidden" id="formId" value="${data.id}">
+                <div class="form-group">
+                    <label class="form-label">配置键</label>
+                    <input type="text" class="form-control" id="formConfigKey" value="${escapeHtml(data.config_key || '')}" disabled>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">配置名称 <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="formConfigName" value="${escapeHtml(data.config_name || '')}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">配置值 <span class="required">*</span></label>
+                    <textarea class="form-control form-textarea" id="formConfigValue">${escapeHtml(data.config_value || '')}</textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">配置类型</label>
+                        <select class="form-control form-select" id="formConfigType">
+                            <option value="string" ${data.config_type === 'string' ? 'selected' : ''}>字符串</option>
+                            <option value="int" ${data.config_type === 'int' ? 'selected' : ''}>整数</option>
+                            <option value="boolean" ${data.config_type === 'boolean' ? 'selected' : ''}>布尔值</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">所属模块</label>
+                        <input type="text" class="form-control" id="formModule" value="${escapeHtml(data.module || '')}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <textarea class="form-control form-textarea" id="formRemark">${escapeHtml(data.remark || '')}</textarea>
+                </div>
+            `;
+            
+            const footer = `
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitUpdate()">确定</button>
+            `;
+            
+            openModal('编辑配置', content, footer);
+        }
+        
+        async function submitAdd() {
+            const config_key = document.getElementById('formConfigKey').value.trim();
+            const config_name = document.getElementById('formConfigName').value.trim();
+            const config_value = document.getElementById('formConfigValue').value.trim();
+            const config_type = document.getElementById('formConfigType').value;
+            const module = document.getElementById('formModule').value.trim();
+            const remark = document.getElementById('formRemark').value.trim();
+            
+            if (!config_key) {
+                showToast('请输入配置键', 'error');
+                return;
+            }
+            if (!config_name) {
+                showToast('请输入配置名称', 'error');
+                return;
+            }
+            if (!config_value) {
+                showToast('请输入配置值', 'error');
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/config/add', {
+                method: 'POST',
+                body: JSON.stringify({ config_key, config_name, config_value, config_type, module, remark })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('添加成功', 'success');
+                closeModal();
+                loadData(1);
+                loadModules();
+            } else {
+                showToast(result?.msg || '添加失败', 'error');
+            }
+        }
+        
+        async function submitUpdate() {
+            const id = document.getElementById('formId').value;
+            const config_name = document.getElementById('formConfigName').value.trim();
+            const config_value = document.getElementById('formConfigValue').value.trim();
+            const config_type = document.getElementById('formConfigType').value;
+            const module = document.getElementById('formModule').value.trim();
+            const remark = document.getElementById('formRemark').value.trim();
+            
+            if (!config_name) {
+                showToast('请输入配置名称', 'error');
+                return;
+            }
+            if (!config_value) {
+                showToast('请输入配置值', 'error');
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/config/update', {
+                method: 'POST',
+                body: JSON.stringify({ id, config_name, config_value, config_type, module, remark })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('修改成功', 'success');
+                closeModal();
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '修改失败', 'error');
+            }
+        }
+        
+        async function deleteItem(id) {
+            if (!confirm('确定要删除该配置吗？')) {
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/config/delete', {
+                method: 'POST',
+                body: JSON.stringify({ id: id })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('删除成功', 'success');
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '删除失败', 'error');
+            }
+        }
+        
+        async function batchDelete() {
+            const ids = getSelectedIds('dataTable');
+            if (ids.length === 0) {
+                showToast('请选择要删除的数据', 'warning');
+                return;
+            }
+            
+            if (!confirm('确定要删除选中的 ' + ids.length + ' 条数据吗？')) {
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/config/delete', {
+                method: 'POST',
+                body: JSON.stringify({ id: ids })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('删除成功', 'success');
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '删除失败', 'error');
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchKeyword').value = '';
+            document.getElementById('searchModule').value = '';
+            loadData(1);
+        }
+        
+        function updateSelectAll() {
+            const table = document.getElementById('dataTable');
+            const allCheckboxes = table.querySelectorAll('tbody .row-checkbox');
+            const checkedCheckboxes = table.querySelectorAll('tbody .row-checkbox:checked');
+            document.getElementById('selectAll').checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCheckboxes.length;
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, calling loadData...');
+            loadModules();
+            loadData(1);
+        });
+    </script>
+</body>
+</html>

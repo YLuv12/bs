@@ -1,0 +1,35 @@
+<view class="page">
+  <map id="map" class="map" latitude="{{latitude}}" longitude="{{longitude}}" scale="{{scale}}" markers="{{markers}}" bindmarkertap="onMarkerTap" show-location/>
+
+  <view class="controls">
+    <view class="control-btn" bindtap="moveToLocation">
+      <text class="control-icon">📍</text>
+    </view>
+    <view class="control-btn" bindtap="toggleNearby">
+      <text class="control-icon">🔍</text>
+    </view>
+  </view>
+
+  <view class="nearby-panel {{showNearby ? 'show' : ''}}">
+    <view class="nearby-header">
+      <view class="nearby-tabs">
+        <view class="tab {{nearbyType === 'food' ? 'active' : ''}}" bindtap="switchNearbyType" data-type="food">{{lang === 'zh' ? '美食' : 'Food'}}</view>
+        <view class="tab {{nearbyType === 'parking' ? 'active' : ''}}" bindtap="switchNearbyType" data-type="parking">{{lang === 'zh' ? '停车场' : 'Parking'}}</view>
+        <view class="tab {{nearbyType === 'wc' ? 'active' : ''}}" bindtap="switchNearbyType" data-type="wc">{{lang === 'zh' ? '卫生间' : 'Restroom'}}</view>
+      </view>
+      <view class="close-btn" bindtap="toggleNearby">×</view>
+    </view>
+    <scroll-view scroll-y class="nearby-list">
+      <view class="nearby-item" wx:for="{{nearbyList}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}">
+        <view class="nearby-info">
+          <view class="nearby-name">{{item.name}}</view>
+          <view class="nearby-address">{{item.address}}</view>
+        </view>
+        <view class="nearby-meta">
+          <text wx:if="{{item.rating}}">★ {{item.rating}}</text>
+          <text>{{item.distance}}m</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

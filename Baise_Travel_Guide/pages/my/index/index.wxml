@@ -1,0 +1,52 @@
+<view class="page">
+  <view class="header">
+    <view class="user-info" wx:if="{{isLoggedIn && userInfo}}">
+      <image class="avatar" src="{{avatarUrl || 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'}}" mode="aspectFill" bindtap="goToProfile"/>
+      <view class="info">
+        <view class="nickname">{{userInfo.wx_nickname || userInfo.nickname || (lang === 'zh' ? '用户' : 'User')}}</view>
+        <view class="user-desc">
+          <text class="gender-text">{{genderText}}</text>
+          <text class="divider">|</text>
+          <text class="intro-text">{{userInfo.intro || (lang === 'zh' ? '未填写简介' : 'No bio yet')}}</text>
+        </view>
+      </view>
+      <view class="edit-btn" bindtap="goToProfile">{{lang === 'zh' ? '编辑' : 'Edit'}}</view>
+    </view>
+    <view class="login-prompt" wx:else bindtap="goToLogin">
+      <image class="avatar default" src="https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0" mode="aspectFill"/>
+      <view class="info">
+        <view class="nickname">{{lang === 'zh' ? '点击登录' : 'Tap to Login'}}</view>
+        <view class="login-type">{{lang === 'zh' ? '登录后享受更多功能' : 'More features after login'}}</view>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <view class="menu-section">
+    <view class="menu-item" wx:for="{{menuList}}" wx:key="type" bindtap="goToMenu" data-path="{{item.path}}">
+      <view class="menu-icon">{{item.icon}}</view>
+      <view class="menu-name">{{lang === 'zh' ? item.name : item.nameEn}}</view>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="action-section">
+    <view class="action-item" bindtap="goToFeedback">
+      <view class="action-icon">📝</view>
+      <view class="action-name">{{lang === 'zh' ? '意见反馈' : 'Feedback'}}</view>
+      <text class="action-arrow">›</text>
+    </view>
+    <view class="action-item" bindtap="goToChangePassword" wx:if="{{isLoggedIn && loginType === 'account'}}">
+      <view class="action-icon">🔐</view>
+      <view class="action-name">{{lang === 'zh' ? '修改密码' : 'Change Password'}}</view>
+      <text class="action-arrow">›</text>
+    </view>
+    <view class="action-item" bindtap="goToSetting">
+      <view class="action-icon">⚙️</view>
+      <view class="action-name">{{lang === 'zh' ? '设置' : 'Settings'}}</view>
+      <text class="action-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="version">{{lang === 'zh' ? '版本' : 'Version'}} 1.0.0</view>
+</view>

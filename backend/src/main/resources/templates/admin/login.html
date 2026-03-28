@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>百色指南平台 - 后台管理登录</title>
+    <link rel="stylesheet" th:href="@{/admin/static/css/login.css}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" width="48" height="48">
+                        <path fill="currentColor" d="M12,2L2,7L12,12L22,7L12,2M2,17L12,22L22,17V12L12,17L2,12V17Z"/>
+                    </svg>
+                </div>
+                <h1>百色指南平台</h1>
+                <p>后台管理系统</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                </div>
+                <div class="form-group remember">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span>记住我</span>
+                    </label>
+                </div>
+                <button type="submit" class="login-btn">
+                    <span>登 录</span>
+                    <div class="loading" style="display: none;">
+                        <svg class="spinner" viewBox="0 0 50 50">
+                            <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4"></circle>
+                        </svg>
+                    </div>
+                </button>
+            </form>
+            <div class="login-footer">
+                <p>默认账号: admin / 123456</p>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script th:src="@{/admin/static/js/login.js}"></script>
+</body>
+</html>

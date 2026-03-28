@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
+<head>
+    <title>首页</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header" style="margin-bottom: 24px;">
+            <h2 id="page-title" style="font-size: 20px; font-weight: 600; color: #333;">控制台</h2>
+        </div>
+        
+        <div class="stat-cards" id="statCards">
+            <div class="stat-card">
+                <div class="stat-icon users">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 17V19H2V17S2 13 9 13 16 17 16 17M12.5 7.5A3.5 3.5 0 1 0 9 11A3.5 3.5 0 0 0 12.5 7.5M15.94 13A5.32 5.32 0 0 1 18 17V19H22V17S22 13.37 15.94 13M15 4A3.39 3.39 0 0 0 13.07 4.59A5 5 0 0 1 13.07 10.41A3.39 3.39 0 0 0 15 11A3.5 3.5 0 0 0 15 4Z"/></svg>
+                </div>
+                <div class="stat-info">
+                    <h3 id="userCount">-</h3>
+                    <p>用户总数</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon scenic">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M14,6L10.25,11L13.1,14.8L11.5,16C9.81,13.75 7,10 7,10L1,18H23L14,6Z"/></svg>
+                </div>
+                <div class="stat-info">
+                    <h3 id="scenicCount">-</h3>
+                    <p>景点总数</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon food">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M8.1,13.34L3.91,9.16C2.35,7.59 2.35,5.06 3.91,3.5L10.93,10.5L8.1,13.34M13.41,13L20.29,19.88L18.88,21.29L12,14.41L5.12,21.29L3.71,19.88L13.36,10.22L13.16,10C12.38,9.23 12.38,7.97 13.16,7.19L17.5,2.82L18.43,3.74L15.19,7L16.15,7.94L19.39,4.69L20.31,5.61L17.06,8.85L18,9.81L21.26,6.56L22.18,7.5L17.81,11.84C17.03,12.62 15.77,12.62 15,11.84L14.78,11.64L13.41,13Z"/></svg>
+                </div>
+                <div class="stat-info">
+                    <h3 id="foodCount">-</h3>
+                    <p>美食总数</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon comment">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10,16V19.08L13.08,16H20V4H4V16H10Z"/></svg>
+                </div>
+                <div class="stat-info">
+                    <h3 id="commentCount">-</h3>
+                    <p>评论总数</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon pending">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>
+                </div>
+                <div class="stat-info">
+                    <h3 id="pendingCommentCount">-</h3>
+                    <p>待审核评论</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon feedback">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H6L4,18V4H20V16Z"/></svg>
+                </div>
+                <div class="stat-info">
+                    <h3 id="pendingFeedbackCount">-</h3>
+                    <p>待处理反馈</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">最近操作日志</h3>
+                <a href="/api/admin/page/log" class="btn btn-secondary btn-sm">查看全部</a>
+            </div>
+            <div class="card-body">
+                <div class="table-wrapper">
+                    <table class="data-table" id="logTable">
+                        <thead>
+                            <tr>
+                                <th>操作人</th>
+                                <th>操作模块</th>
+                                <th>操作内容</th>
+                                <th>IP地址</th>
+                                <th>操作时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="scripts">
+        async function loadStatistics() {
+            const result = await request('/admin/dashboard/stats');
+            if (result && result.code === 200) {
+                document.getElementById('userCount').textContent = result.data.userCount || 0;
+                document.getElementById('scenicCount').textContent = result.data.scenicCount || 0;
+                document.getElementById('foodCount').textContent = result.data.foodCount || 0;
+                document.getElementById('commentCount').textContent = result.data.commentCount || 0;
+                document.getElementById('pendingCommentCount').textContent = result.data.pendingCommentCount || 0;
+                document.getElementById('pendingFeedbackCount').textContent = result.data.pendingFeedbackCount || 0;
+            }
+        }
+        
+        async function loadRecentLogs() {
+            const result = await request('/admin/log/list?pageNum=1&pageSize=10');
+            if (result && result.code === 200) {
+                const tbody = document.getElementById('logTableBody');
+                if (result.data && result.data.records && result.data.records.length > 0) {
+                    let html = '';
+                    result.data.records.forEach(log => {
+                        html += '<tr>';
+                        html += '<td>' + escapeHtml(log.admin_name || '-') + '</td>';
+                        html += '<td>' + escapeHtml(log.module || '-') + '</td>';
+                        html += '<td>' + escapeHtml(log.operation || '-') + '</td>';
+                        html += '<td>' + escapeHtml(log.ip || '-') + '</td>';
+                        html += '<td>' + formatDate(log.create_time) + '</td>';
+                        html += '</tr>';
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">暂无数据</td></tr>';
+                }
+            }
+        }
+        
+        loadStatistics();
+        loadRecentLogs();
+    </script>
+</body>
+</html>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{admin/layout}">
+<head>
+    <title>景点管理</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header" style="margin-bottom: 24px;">
+            <h2 id="page-title" style="font-size: 20px; font-weight: 600; color: #333;">景点管理</h2>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchKeyword" placeholder="景点名称/地址">
+                        <select class="search-select" id="searchType">
+                            <option value="">全部类型</option>
+                            <option value="1">红色景点</option>
+                            <option value="2">自然风光</option>
+                            <option value="3">民族村寨</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadData(1)">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+                            搜索
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearSearch()">清空</button>
+                    </div>
+                    <div class="action-btns">
+                        <button class="btn btn-primary" onclick="openAddModal()">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+                            新增
+                        </button>
+                        <button class="btn btn-danger" onclick="batchDelete()">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                            批量删除
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th width="50"><input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll('dataTable', this)"></th>
+                                <th>ID</th>
+                                <th>封面</th>
+                                <th>景点名称</th>
+                                <th>类型</th>
+                                <th>地址</th>
+                                <th>评分</th>
+                                <th>访问量</th>
+                                <th>创建时间</th>
+                                <th width="150">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="10" class="text-center">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="pagination" class="pagination"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script layout:fragment="scripts">
+        async function loadData(page) {
+            currentPage = page || 1;
+            const keyword = document.getElementById('searchKeyword').value;
+            const type = document.getElementById('searchType').value;
+            
+            let url = '/admin/scenic/list?pageNum=' + currentPage + '&pageSize=10';
+            if (keyword) url += '&keyword=' + encodeURIComponent(keyword);
+            if (type) url += '&type=' + type;
+            
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center">加载中...</td></tr>';
+            
+            try {
+                const result = await request(url);
+                
+                if (!result) {
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="color: #999;">网络错误，请稍后重试</td></tr>';
+                    document.getElementById('pagination').innerHTML = '';
+                    return;
+                }
+                
+                if (result.code === 200) {
+                    if (result.data && result.data.records && result.data.records.length > 0) {
+                        let html = '';
+                        result.data.records.forEach(item => {
+                            html += '<tr>';
+                            html += '<td><input type="checkbox" class="checkbox row-checkbox" value="' + item.id + '" onchange="updateSelectAll()"></td>';
+                            html += '<td>' + item.id + '</td>';
+                            html += '<td><img src="' + (item.cover_img || '/api/admin/static/images/default-cover.png') + '" class="image-preview" onerror="this.src=\'/api/admin/static/images/default-cover.png\'"></td>';
+                            html += '<td>' + escapeHtml(item.name_cn || '-') + '</td>';
+                            html += '<td>' + getTypeText(item.type) + '</td>';
+                            html += '<td class="text-ellipsis" title="' + escapeHtml(item.address_cn || '') + '">' + escapeHtml(item.address_cn || '-') + '</td>';
+                            html += '<td>' + (item.avg_score || (item.score_count > 0 ? (item.total_score / item.score_count).toFixed(1) : '-')) + '</td>';
+                            html += '<td>' + (item.visit_count || 0) + '</td>';
+                            html += '<td>' + formatDate(item.create_time) + '</td>';
+                            html += '<td class="actions">';
+                            html += '<button class="action-btn view" title="查看" onclick="viewDetail(' + item.id + ')"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/></svg></button>';
+                            html += '<button class="action-btn edit" title="编辑" onclick="openEditModal(' + item.id + ')"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg></button>';
+                            html += '<button class="action-btn delete" title="删除" onclick="deleteItem(' + item.id + ')"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg></button>';
+                            html += '</td>';
+                            html += '</tr>';
+                        });
+                        tbody.innerHTML = html;
+                        renderPagination(document.getElementById('pagination'), currentPage, result.data.total, 10, 'loadData');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="color: #999;">暂无数据</td></tr>';
+                        document.getElementById('pagination').innerHTML = '';
+                    }
+                } else {
+                    console.error('API Error:', result);
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="color: #ef4444;">' + (result.msg || '加载失败') + '</td></tr>';
+                    document.getElementById('pagination').innerHTML = '';
+                }
+            } catch (error) {
+                console.error('Load data error:', error);
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="color: #ef4444;">数据加载异常，请刷新重试</td></tr>';
+                document.getElementById('pagination').innerHTML = '';
+            }
+        }
+        
+        function getTypeText(type) {
+            if (type === 1) return '<span class="status-tag danger">红色景点</span>';
+            if (type === 2) return '<span class="status-tag success">自然风光</span>';
+            if (type === 3) return '<span class="status-tag info">民族村寨</span>';
+            return '-';
+        }
+        
+        async function viewDetail(id) {
+            showLoading();
+            const result = await request('/admin/scenic/detail/' + id);
+            hideLoading();
+            
+            if (!result || result.code !== 200) {
+                showToast(result?.msg || '获取数据失败', 'error');
+                return;
+            }
+            
+            const data = result.data;
+            const content = `
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">中文名称</label>
+                            <div>${escapeHtml(data.name_cn || '-')}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">英文名称</label>
+                            <div>${escapeHtml(data.name_en || '-')}</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">景点描述</label>
+                        <div style="white-space: pre-wrap;">${escapeHtml(data.desc_cn || '-')}</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">景点类型</label>
+                            <div>${getTypeText(data.type)}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">景区等级</label>
+                            <div>${escapeHtml(data.grade_cn || '-')}</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">地址</label>
+                        <div>${escapeHtml(data.address_cn || '-')}</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">开放时间</label>
+                            <div>${escapeHtml(data.open_time_cn || '-')}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">门票信息</label>
+                            <div>${escapeHtml(data.ticket_info_cn || '-')}</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">联系电话</label>
+                            <div>${escapeHtml(data.phone || '-')}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">建议游玩时长</label>
+                            <div>${escapeHtml(data.play_time_cn || '-')}</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">评分</label>
+                            <div>${data.score_count > 0 ? (data.total_score / data.score_count).toFixed(1) + ' 分 (' + data.score_count + '人评价)' : '暂无评分'}</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">访问量</label>
+                            <div>${data.visit_count || 0}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            openModal('景点详情', content, '<button class="btn btn-secondary" onclick="closeModal()">关闭</button>');
+        }
+        
+        function openAddModal() {
+            const content = `
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">中文名称 <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="formNameCn" placeholder="请输入中文名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">英文名称</label>
+                            <input type="text" class="form-control" id="formNameEn" placeholder="请输入英文名称">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">景点描述</label>
+                        <textarea class="form-control form-textarea" id="formDescCn" placeholder="请输入景点描述"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">景点类型 <span class="required">*</span></label>
+                            <select class="form-control form-select" id="formType">
+                                <option value="1">红色景点</option>
+                                <option value="2">自然风光</option>
+                                <option value="3">民族村寨</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">景区等级</label>
+                            <input type="text" class="form-control" id="formGradeCn" placeholder="如：5A、4A">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">地址 <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="formAddressCn" placeholder="请输入详细地址">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">开放时间</label>
+                            <input type="text" class="form-control" id="formOpenTimeCn" placeholder="如：08:00-18:00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">门票信息</label>
+                            <input type="text" class="form-control" id="formTicketInfoCn" placeholder="如：免费/50元">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">联系电话</label>
+                            <input type="text" class="form-control" id="formPhone" placeholder="请输入联系电话">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">建议游玩时长</label>
+                            <input type="text" class="form-control" id="formPlayTimeCn" placeholder="如：2-3小时">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">经度</label>
+                            <input type="text" class="form-control" id="formLongitude" placeholder="如：106.618702">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">纬度</label>
+                            <input type="text" class="form-control" id="formLatitude" placeholder="如：23.908333">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">封面图</label>
+                        <div id="coverImgPreview"></div>
+                        <input type="hidden" id="coverImgPreviewUrl">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">轮播图（可多选）</label>
+                        <div id="imgsPreview"></div>
+                        <input type="hidden" id="imgsPreviewUrl">
+                    </div>
+                </div>
+            `;
+            
+            const footer = `
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitAdd()">确定</button>
+            `;
+            
+            openModal('新增景点', content, footer).then(() => {
+                createImageUploader('coverImgInput', 'coverImgPreview', false, 1);
+                createImageUploader('imgsInput', 'imgsPreview', true, 3);
+            });
+        }
+        
+        async function openEditModal(id) {
+            showLoading();
+            const result = await request('/admin/scenic/detail/' + id);
+            hideLoading();
+            
+            if (!result || result.code !== 200) {
+                showToast(result?.msg || '获取数据失败', 'error');
+                return;
+            }
+            
+            const data = result.data;
+            
+            const content = `
+                <input type="hidden" id="formId" value="${data.id}">
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">中文名称 <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="formNameCn" value="${escapeHtml(data.name_cn || '')}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">英文名称</label>
+                            <input type="text" class="form-control" id="formNameEn" value="${escapeHtml(data.name_en || '')}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">景点描述</label>
+                        <textarea class="form-control form-textarea" id="formDescCn">${escapeHtml(data.desc_cn || '')}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">景点类型 <span class="required">*</span></label>
+                            <select class="form-control form-select" id="formType">
+                                <option value="1" ${data.type === 1 ? 'selected' : ''}>红色景点</option>
+                                <option value="2" ${data.type === 2 ? 'selected' : ''}>自然风光</option>
+                                <option value="3" ${data.type === 3 ? 'selected' : ''}>民族村寨</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">景区等级</label>
+                            <input type="text" class="form-control" id="formGradeCn" value="${escapeHtml(data.grade_cn || '')}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">地址 <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="formAddressCn" value="${escapeHtml(data.address_cn || '')}">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">开放时间</label>
+                            <input type="text" class="form-control" id="formOpenTimeCn" value="${escapeHtml(data.open_time_cn || '')}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">门票信息</label>
+                            <input type="text" class="form-control" id="formTicketInfoCn" value="${escapeHtml(data.ticket_info_cn || '')}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">联系电话</label>
+                            <input type="text" class="form-control" id="formPhone" value="${escapeHtml(data.phone || '')}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">建议游玩时长</label>
+                            <input type="text" class="form-control" id="formPlayTimeCn" value="${escapeHtml(data.play_time_cn || '')}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">经度</label>
+                            <input type="text" class="form-control" id="formLongitude" value="${data.longitude || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">纬度</label>
+                            <input type="text" class="form-control" id="formLatitude" value="${data.latitude || ''}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">封面图</label>
+                        <div id="coverImgPreviewEdit"></div>
+                        <input type="hidden" id="coverImgPreviewEditUrl" value="${escapeHtml(data.cover_img || '')}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">轮播图（可多选）</label>
+                        <div id="imgsPreviewEdit"></div>
+                        <input type="hidden" id="imgsPreviewEditUrl" value="${escapeHtml(data.imgs || '')}">
+                    </div>
+                </div>
+            `;
+            
+            const footer = `
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitUpdate()">确定</button>
+            `;
+            
+            openModal('编辑景点', content, footer).then(() => {
+                createImageUploader('coverImgInputEdit', 'coverImgPreviewEdit', false, 1);
+                createImageUploader('imgsInputEdit', 'imgsPreviewEdit', true, 3);
+                
+                initImagePreview('coverImgPreviewEdit', data.cover_img, false, 1);
+                initImagePreview('imgsPreviewEdit', data.imgs, true, 3);
+            });
+        }
+        
+        async function submitAdd() {
+            const name_cn = document.getElementById('formNameCn').value.trim();
+            const name_en = document.getElementById('formNameEn').value.trim();
+            const desc_cn = document.getElementById('formDescCn').value.trim();
+            const type = parseInt(document.getElementById('formType').value);
+            const grade_cn = document.getElementById('formGradeCn').value.trim();
+            const address_cn = document.getElementById('formAddressCn').value.trim();
+            const open_time_cn = document.getElementById('formOpenTimeCn').value.trim();
+            const ticket_info_cn = document.getElementById('formTicketInfoCn').value.trim();
+            const phone = document.getElementById('formPhone').value.trim();
+            const play_time_cn = document.getElementById('formPlayTimeCn').value.trim();
+            const longitude = document.getElementById('formLongitude').value.trim();
+            const latitude = document.getElementById('formLatitude').value.trim();
+            const cover_img = document.getElementById('coverImgPreviewUrl').value.trim();
+            const imgs = document.getElementById('imgsPreviewUrl').value.trim();
+            
+            if (!name_cn) {
+                showToast('请输入中文名称', 'error');
+                return;
+            }
+            if (!address_cn) {
+                showToast('请输入地址', 'error');
+                return;
+            }
+            
+            const data = {
+                name_cn, name_en, desc_cn, type, grade_cn, address_cn,
+                open_time_cn, ticket_info_cn, phone, play_time_cn,
+                longitude: longitude || '0', latitude: latitude || '0',
+                cover_img: cover_img || '',
+                imgs: imgs || '',
+                type_cn: type === 1 ? '红色景点' : (type === 2 ? '自然风光' : '民族村寨'),
+                type_en: type === 1 ? 'Red Spot' : (type === 2 ? 'Natural Scenery' : 'Ethnic Village'),
+                name_en: name_en || name_cn,
+                desc_en: desc_cn,
+                address_en: address_cn,
+                open_time_en: open_time_cn,
+                ticket_info_en: ticket_info_cn,
+                play_time_en: play_time_cn,
+                grade_en: grade_cn
+            };
+            
+            showLoading();
+            const result = await request('/admin/scenic/add', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('添加成功', 'success');
+                closeModal();
+                loadData(1);
+            } else {
+                showToast(result?.msg || '添加失败', 'error');
+            }
+        }
+        
+        async function submitUpdate() {
+            const id = document.getElementById('formId').value;
+            const name_cn = document.getElementById('formNameCn').value.trim();
+            const name_en = document.getElementById('formNameEn').value.trim();
+            const desc_cn = document.getElementById('formDescCn').value.trim();
+            const type = parseInt(document.getElementById('formType').value);
+            const grade_cn = document.getElementById('formGradeCn').value.trim();
+            const address_cn = document.getElementById('formAddressCn').value.trim();
+            const open_time_cn = document.getElementById('formOpenTimeCn').value.trim();
+            const ticket_info_cn = document.getElementById('formTicketInfoCn').value.trim();
+            const phone = document.getElementById('formPhone').value.trim();
+            const play_time_cn = document.getElementById('formPlayTimeCn').value.trim();
+            const longitude = document.getElementById('formLongitude').value.trim();
+            const latitude = document.getElementById('formLatitude').value.trim();
+            const cover_img = document.getElementById('coverImgPreviewEditUrl').value.trim();
+            const imgs = document.getElementById('imgsPreviewEditUrl').value.trim();
+            
+            if (!name_cn) {
+                showToast('请输入中文名称', 'error');
+                return;
+            }
+            if (!address_cn) {
+                showToast('请输入地址', 'error');
+                return;
+            }
+            
+            const data = {
+                id, name_cn, name_en, desc_cn, type, grade_cn, address_cn,
+                open_time_cn, ticket_info_cn, phone, play_time_cn,
+                longitude: longitude || '0', latitude: latitude || '0',
+                cover_img: cover_img || '',
+                imgs: imgs || '',
+                type_cn: type === 1 ? '红色景点' : (type === 2 ? '自然风光' : '民族村寨'),
+                type_en: type === 1 ? 'Red Spot' : (type === 2 ? 'Natural Scenery' : 'Ethnic Village'),
+                name_en: name_en || name_cn,
+                desc_en: desc_cn,
+                address_en: address_cn,
+                open_time_en: open_time_cn,
+                ticket_info_en: ticket_info_cn,
+                play_time_en: play_time_cn,
+                grade_en: grade_cn
+            };
+            
+            showLoading();
+            const result = await request('/admin/scenic/update', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('修改成功', 'success');
+                closeModal();
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '修改失败', 'error');
+            }
+        }
+        
+        async function deleteItem(id) {
+            if (!confirm('确定要删除该景点吗？')) {
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/scenic/delete', {
+                method: 'POST',
+                body: JSON.stringify({ id: id })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('删除成功', 'success');
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '删除失败', 'error');
+            }
+        }
+        
+        async function batchDelete() {
+            const ids = getSelectedIds('dataTable');
+            if (ids.length === 0) {
+                showToast('请选择要删除的数据', 'warning');
+                return;
+            }
+            
+            if (!confirm('确定要删除选中的 ' + ids.length + ' 条数据吗？')) {
+                return;
+            }
+            
+            showLoading();
+            const result = await request('/admin/scenic/delete', {
+                method: 'POST',
+                body: JSON.stringify({ id: ids })
+            });
+            hideLoading();
+            
+            if (result && result.code === 200) {
+                showToast('删除成功', 'success');
+                loadData(currentPage);
+            } else {
+                showToast(result?.msg || '删除失败', 'error');
+            }
+        }
+        
+        function clearSearch() {
+            document.getElementById('searchKeyword').value = '';
+            document.getElementById('searchType').value = '';
+            loadData(1);
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, calling loadData...');
+            loadData(1);
+        });
+    </script>
+</body>
+</html>

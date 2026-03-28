@@ -1,0 +1,155 @@
+.page { min-height: 100vh; background: #F5F6F8; }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  background: #FFFFFF;
+}
+
+.title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1A1A2E;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 24rpx;
+  background: linear-gradient(135deg, #E53935 0%, #FF6B6B 100%);
+  border-radius: 32rpx;
+  color: #FFFFFF;
+  font-size: 26rpx;
+}
+
+.add-icon { font-size: 32rpx; }
+
+.content { padding: 20rpx; }
+
+.item {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.item-type {
+  font-size: 26rpx;
+  color: #E53935;
+  background: rgba(229, 57, 53, 0.1);
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.item-status {
+  font-size: 24rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.item-status.pending {
+  background: #FFF3E0;
+  color: #FF9800;
+}
+
+.item-status.processed {
+  background: #E8F5E9;
+  color: #4CAF50;
+}
+
+.item-content {
+  font-size: 28rpx;
+  color: #333333;
+  line-height: 1.6;
+  margin-bottom: 16rpx;
+}
+
+.item-images {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.item-img {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 8rpx;
+}
+
+.item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-time {
+  font-size: 22rpx;
+  color: #8A8AA3;
+}
+
+.item-result {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #EAEAEA;
+}
+
+.result-title {
+  font-size: 24rpx;
+  color: #4CAF50;
+  margin-bottom: 8rpx;
+}
+
+.result-content {
+  font-size: 26rpx;
+  color: #666666;
+  line-height: 1.5;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 0;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #8A8AA3;
+  margin-bottom: 30rpx;
+}
+
+.empty-btn {
+  padding: 20rpx 40rpx;
+  background: linear-gradient(135deg, #E53935 0%, #FF6B6B 100%);
+  border-radius: 32rpx;
+  color: #FFFFFF;
+  font-size: 28rpx;
+}
+
+.loading {
+  text-align: center;
+  padding: 40rpx;
+  color: #8A8AA3;
+}
+
+.no-more {
+  text-align: center;
+  padding: 30rpx;
+  color: #8A8AA3;
+  font-size: 24rpx;
+}

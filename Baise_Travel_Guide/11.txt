@@ -1,0 +1,344 @@
+-- ====================== 1. 管理员表（新增，适配后台管理） ======================
+DROP TABLE IF EXISTS `admin`;
+CREATE TABLE `admin` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '管理员ID',
+  `username` varchar(50) NOT NULL COMMENT '管理员账号（唯一）',
+  `password` varchar(100) NOT NULL COMMENT '密码（bcrypt加密）',
+  `nickname` varchar(50) DEFAULT NULL COMMENT '管理员昵称',
+  `phone` varchar(20) DEFAULT NULL COMMENT '联系方式',
+  `last_login_time` datetime DEFAULT NULL COMMENT '最后登录时间',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_admin_username` (`username`),
+  KEY `idx_delete_time` (`delete_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员表';
+
+-- 初始化超级管理员（密码：123456，bcrypt加密）
+INSERT INTO `admin` (`username`, `password`) VALUES ('admin', '$2a$10$XzpSgEC/jACCNSB8j1KB7.HKdPnJ07NXiqMeUBhH5GWpUA5qjRi9W');
+
+-- ====================== 2. 管理员操作日志表（新增，记录后台操作） ======================
+DROP TABLE IF EXISTS `admin_operation_log`;
+CREATE TABLE `admin_operation_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '日志ID',
+  `admin_id` bigint NOT NULL COMMENT '操作人ID（关联admin.id）',
+  `module` varchar(50) NOT NULL COMMENT '操作模块（如：景点管理、反馈处理）',
+  `operation` varchar(100) NOT NULL COMMENT '操作描述（如：新增景点、审核评论）',
+  `target_id` bigint DEFAULT NULL COMMENT '操作目标ID（如：景点ID、反馈ID）',
+  `ip` varchar(50) DEFAULT NULL COMMENT '操作IP',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_admin_id` (`admin_id`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员操作日志表';
+
+-- ====================== 3. 用户信息表（优化逻辑删除+索引） ======================
+DROP TABLE IF EXISTS `user_info`;
+CREATE TABLE `user_info` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '用户ID，主键',
+  `wx_openid` varchar(100) DEFAULT NULL COMMENT '微信openid，微信登录唯一标识',
+  `username` varchar(50) NOT NULL COMMENT '账号登录的用户名，唯一',
+  `password` varchar(100) NOT NULL COMMENT '密码，bcrypt加密存储',
+  `wx_avatar` varchar(500) DEFAULT NULL COMMENT '微信头像地址',
+  `wx_nickname` varchar(100) DEFAULT NULL COMMENT '微信昵称',
+  `nickname` varchar(50) DEFAULT NULL COMMENT '自定义昵称',
+  `age` tinyint DEFAULT NULL COMMENT '年龄',
+  `gender` tinyint DEFAULT 0 COMMENT '性别：0-未知，1-男，2-女',
+  `phone` varchar(20) DEFAULT NULL COMMENT '联系方式',
+  `intro` varchar(500) DEFAULT NULL COMMENT '个人简介（优化：长度从200扩至500）',
+  `login_type` tinyint NOT NULL COMMENT '登录类型：1-微信登录，2-账号密码登录',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_wx_openid` (`wx_openid`),
+  UNIQUE KEY `uk_username` (`username`),
+  KEY `idx_nickname_phone` (`nickname`, `phone`) COMMENT '昵称/手机号搜索索引',
+  KEY `idx_delete_time` (`delete_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信息表';
+
+-- ====================== 4. 景点信息表（优化逻辑删除+评分+索引） ======================
+DROP TABLE IF EXISTS `scenic_spot`;
+CREATE TABLE `scenic_spot` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '景点ID，主键',
+  `name_cn` varchar(100) NOT NULL COMMENT '景点名称（中文）',
+  `name_en` varchar(200) NOT NULL COMMENT '景点名称（英文）',
+  `desc_cn` text COMMENT '景点描述（中文）',
+  `desc_en` text COMMENT '景点描述（英文）',
+  `strategy_cn` text COMMENT '游玩攻略（中文）',
+  `strategy_en` text COMMENT '游玩攻略（英文）',
+  `address_cn` varchar(500) NOT NULL COMMENT '详细地址（中文）',
+  `address_en` varchar(500) NOT NULL COMMENT '详细地址（英文）（优化：长度从800缩至500）',
+  `longitude` decimal(15,10) NOT NULL COMMENT '经度（高德地图）',
+  `latitude` decimal(15,10) NOT NULL COMMENT '纬度（高德地图）',
+  `open_time_cn` varchar(100) NOT NULL COMMENT '开放时间（中文）',
+  `open_time_en` varchar(200) NOT NULL COMMENT '开放时间（英文）',
+  `ticket_info_cn` varchar(200) NOT NULL COMMENT '门票信息（中文）',
+  `ticket_info_en` varchar(300) NOT NULL COMMENT '门票信息（英文）',
+  `phone` varchar(20) DEFAULT NULL COMMENT '联系电话',
+  `play_time_cn` varchar(50) DEFAULT NULL COMMENT '建议游玩时长（中文）',
+  `play_time_en` varchar(100) DEFAULT NULL COMMENT '建议游玩时长（英文）',
+  `voice_url` varchar(500) DEFAULT NULL COMMENT '语音介绍地址',
+  `type` tinyint NOT NULL COMMENT '景点类型：1-红色景点，2-自然风光，3-民族村寨',
+  `type_cn` varchar(20) NOT NULL COMMENT '景点类型名称（中文）',
+  `type_en` varchar(50) NOT NULL COMMENT '景点类型名称（英文）',
+  `grade_cn` varchar(10) DEFAULT NULL COMMENT '景区等级（中文）',
+  `grade_en` varchar(20) DEFAULT NULL COMMENT '景区等级（英文）',
+  `total_score` decimal(3,1) DEFAULT 0.0 COMMENT '总评分（所有用户评分之和）',
+  `score_count` int DEFAULT 0 COMMENT '评分人数',
+  `visit_count` bigint DEFAULT 0 COMMENT '访问量（热度）',
+  `collect_count` bigint DEFAULT 0 COMMENT '收藏量（热度）',
+  `cover_img` varchar(500) NOT NULL COMMENT '封面图地址',
+  `imgs` text COMMENT '轮播图地址，多个用逗号分隔',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  KEY `idx_type` (`type`),
+  KEY `idx_total_score` (`total_score`),
+  KEY `idx_collect_visit` (`collect_count`, `visit_count`) COMMENT '热度排序索引',
+  KEY `idx_type_score` (`type`, `total_score`) COMMENT '按类型+评分筛选',
+  KEY `idx_delete_time` (`delete_time`),
+  KEY `idx_name_cn` (`name_cn`) COMMENT '景点名称中文搜索'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='景点信息表（全字段中英双语）';
+
+-- ====================== 5. 美食/商户信息表（优化逻辑删除+索引） ======================
+DROP TABLE IF EXISTS `food`;
+CREATE TABLE `food` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '美食/商户ID，主键',
+  `name_cn` varchar(100) NOT NULL COMMENT '美食/商户名称（中文）',
+  `name_en` varchar(200) NOT NULL COMMENT '美食/商户名称（英文）',
+  `desc_cn` text COMMENT '美食介绍（中文）',
+  `desc_en` text COMMENT '美食介绍（英文）',
+  `merchant_name_cn` varchar(100) NOT NULL COMMENT '商户名称（中文）',
+  `merchant_name_en` varchar(200) NOT NULL COMMENT '商户名称（英文）',
+  `signature_dish_cn` varchar(500) NOT NULL COMMENT '招牌菜（中文）',
+  `signature_dish_en` varchar(800) NOT NULL COMMENT '招牌菜（英文）',
+  `per_capita` decimal(10,2) NOT NULL COMMENT '人均消费（数值）',
+  `per_capita_cn` varchar(50) NOT NULL COMMENT '人均消费（中文，含单位）',
+  `per_capita_en` varchar(50) NOT NULL COMMENT '人均消费（英文，含单位）',
+  `business_time_cn` varchar(100) NOT NULL COMMENT '营业时长（中文）',
+  `business_time_en` varchar(200) NOT NULL COMMENT '营业时长（英文）',
+  `address_cn` varchar(500) NOT NULL COMMENT '详细地址（中文）',
+  `address_en` varchar(500) NOT NULL COMMENT '详细地址（英文）（优化：长度从800缩至500）',
+  `longitude` decimal(15,10) NOT NULL COMMENT '经度（高德地图）',
+  `latitude` decimal(15,10) NOT NULL COMMENT '纬度（高德地图）',
+  `phone` varchar(20) DEFAULT NULL COMMENT '联系电话',
+  `park_info_cn` varchar(200) DEFAULT NULL COMMENT '停车信息（中文）',
+  `park_info_en` varchar(300) DEFAULT NULL COMMENT '停车信息（英文）',
+  `type` tinyint NOT NULL COMMENT '美食品类：1-百色特色菜，2-小吃，3-茶饮',
+  `type_cn` varchar(20) NOT NULL COMMENT '美食品类名称（中文）',
+  `type_en` varchar(50) NOT NULL COMMENT '美食品类名称（英文）',
+  `service_type` tinyint DEFAULT 0 COMMENT '服务类型：0-仅堂食，1-堂食+配送',
+  `service_type_cn` varchar(20) NOT NULL COMMENT '服务类型名称（中文）',
+  `service_type_en` varchar(50) NOT NULL COMMENT '服务类型名称（英文）',
+  `total_score` decimal(3,1) DEFAULT 0.0 COMMENT '总评分',
+  `score_count` int DEFAULT 0 COMMENT '评分人数',
+  `visit_count` bigint DEFAULT 0 COMMENT '访问量（热度）',
+  `collect_count` bigint DEFAULT 0 COMMENT '收藏量（热度）',
+  `cover_img` varchar(500) NOT NULL COMMENT '封面图地址',
+  `imgs` text COMMENT '菜品轮播图，多个用逗号分隔',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  KEY `idx_type` (`type`),
+  KEY `idx_total_score` (`total_score`),
+  KEY `idx_per_capita` (`per_capita`),
+  KEY `idx_collect_visit` (`collect_count`, `visit_count`) COMMENT '热度排序索引',
+  KEY `idx_type_per_capita` (`type`, `per_capita`) COMMENT '按类型+人均消费筛选',
+  KEY `idx_delete_time` (`delete_time`),
+  KEY `idx_name_cn` (`name_cn`) COMMENT '美食名称中文搜索'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='美食/商户信息表（全字段中英双语）';
+
+-- ====================== 6. 收藏表（优化逻辑删除） ======================
+DROP TABLE IF EXISTS `collect`;
+CREATE TABLE `collect` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '收藏ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID，关联user_info.id',
+  `target_id` bigint NOT NULL COMMENT '收藏目标ID：景点ID/美食ID',
+  `target_type` tinyint NOT NULL COMMENT '目标类型：1-景点，2-美食',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_target` (`user_id`,`target_id`,`target_type`) COMMENT '用户对同一目标仅能收藏一次',
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_delete_time` (`delete_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='收藏表';
+
+-- ====================== 7. 评分表（优化逻辑删除） ======================
+DROP TABLE IF EXISTS `score`;
+CREATE TABLE `score` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '评分ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `target_id` bigint NOT NULL COMMENT '评分目标ID：景点ID/美食ID',
+  `target_type` tinyint NOT NULL COMMENT '目标类型：1-景点，2-美食',
+  `score` tinyint NOT NULL COMMENT '评分（1-5星）',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_target` (`user_id`,`target_id`,`target_type`) COMMENT '同一用户对同一目标仅能评一次',
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_delete_time` (`delete_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评分表';
+
+-- ====================== 8. 用户互动表（优化逻辑删除+注释） ======================
+DROP TABLE IF EXISTS `interact`;
+CREATE TABLE `interact` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '互动ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `target_id` bigint NOT NULL COMMENT '互动目标ID：景点ID/美食ID',
+  `target_type` tinyint NOT NULL COMMENT '目标类型：1-景点，2-美食',
+  `interact_type` tinyint NOT NULL COMMENT '互动类型：1-景点点赞，2-景点打卡，3-美食点赞，4-美食种草',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_target_interact` (`user_id`,`target_id`,`interact_type`) COMMENT '同一用户对同一目标仅能做一次同类型互动',
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_delete_time` (`delete_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户互动表（点赞/打卡/种草）';
+
+-- ====================== 9. 旅行足迹表（优化逻辑删除） ======================
+DROP TABLE IF EXISTS `footprint`;
+CREATE TABLE `footprint` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '足迹ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `target_id` bigint NOT NULL COMMENT '足迹目标ID：景点ID/美食ID',
+  `target_type` tinyint NOT NULL COMMENT '目标类型：1-景点，2-美食',
+  `browse_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '浏览时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_browse_time` (`browse_time`),
+  KEY `idx_delete_time` (`delete_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='旅行足迹表';
+
+-- ====================== 10. 评论表（优化状态+审核字段+逻辑删除） ======================
+DROP TABLE IF EXISTS `comment`;
+CREATE TABLE `comment` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '评论ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `target_id` bigint NOT NULL COMMENT '评论目标ID：景点ID/美食ID',
+  `target_type` tinyint NOT NULL COMMENT '目标类型：1-景点，2-美食',
+  `score` tinyint NOT NULL COMMENT '评论评分（1-5星）',
+  `content` text NOT NULL COMMENT '评论内容',
+  `tags` varchar(200) DEFAULT NULL COMMENT '评论标签，多个用逗号分隔',
+  `imgs` text COMMENT '评论图片，多个用逗号分隔',
+  `like_count` int DEFAULT 0 COMMENT '评论点赞数',
+  `audit_admin_id` bigint DEFAULT NULL COMMENT '审核人ID（关联admin.id）',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  `status` tinyint DEFAULT 1 COMMENT '审核状态：1-待审核，2-已通过，3-已拒绝',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_target` (`target_id`,`target_type`),
+  KEY `idx_create_time` (`create_time`),
+  KEY `idx_delete_status` (`delete_time`, `status`),
+  KEY `idx_audit_admin_id` (`audit_admin_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论表';
+
+-- ====================== 11. 评论回复表（优化状态+逻辑删除） ======================
+DROP TABLE IF EXISTS `comment_reply`;
+CREATE TABLE `comment_reply` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '回复ID',
+  `comment_id` bigint NOT NULL COMMENT '原评论ID，关联comment.id',
+  `user_id` bigint NOT NULL COMMENT '回复用户ID',
+  `to_user_id` bigint NOT NULL COMMENT '被回复用户ID',
+  `content` text NOT NULL COMMENT '回复内容',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  `status` tinyint DEFAULT 1 COMMENT '状态：1-正常，2-已屏蔽',
+  PRIMARY KEY (`id`),
+  KEY `idx_comment_id` (`comment_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_delete_status` (`delete_time`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论回复表（一级回复）';
+
+-- ====================== 12. 意见反馈表（优化状态+处理人字段+逻辑删除） ======================
+DROP TABLE IF EXISTS `feedback`;
+CREATE TABLE `feedback` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '反馈ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `type` tinyint NOT NULL COMMENT '反馈类型：1-景点添加，2-美食添加，3-Bug反馈，4-投诉，5-功能建议，6-其他',
+  `content` text NOT NULL COMMENT '反馈内容',
+  `contact` varchar(100) DEFAULT NULL COMMENT '联系方式（手机号/微信）',
+  `imgs` text COMMENT '反馈图片，多个用逗号分隔',
+  `handle_admin_id` bigint DEFAULT NULL COMMENT '处理人ID（关联admin.id）',
+  `handle_result` text DEFAULT NULL COMMENT '处理结果',
+  `handle_time` datetime DEFAULT NULL COMMENT '处理时间',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  `status` tinyint DEFAULT 0 COMMENT '处理状态：0-待处理，1-已处理，2-已驳回',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_type` (`type`),
+  KEY `idx_delete_status` (`delete_time`, `status`),
+  KEY `idx_handle_admin_id` (`handle_admin_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='意见反馈表';
+
+-- ====================== 13. 文旅资讯表（优化关联+审核字段+逻辑删除） ======================
+DROP TABLE IF EXISTS `news`;
+CREATE TABLE `news` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '资讯ID（主键）',
+  `title_cn` varchar(200) NOT NULL COMMENT '资讯标题（中文）',
+  `title_en` varchar(400) NOT NULL COMMENT '资讯标题（英文）',
+  `content_cn` longtext NOT NULL COMMENT '资讯内容（中文）',
+  `content_en` longtext NOT NULL COMMENT '资讯内容（英文）',
+  `cover_img` varchar(500) NOT NULL COMMENT '资讯封面图URL',
+  `author_id` bigint NOT NULL COMMENT '作者ID（关联user_info.id）（优化：修正关联表）',
+  `author_name` varchar(50) NOT NULL COMMENT '作者昵称（冗余存储，避免联表查询）',
+  `audit_admin_id` bigint DEFAULT NULL COMMENT '审核人ID（关联admin.id）',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `read_count` bigint UNSIGNED DEFAULT 0 COMMENT '阅读量（非负）',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：1-已发布 2-草稿 3-下架（便于后台管理）',
+  `sort` int NOT NULL DEFAULT 0 COMMENT '排序值（越大越靠前，用于手动置顶）',
+  `tags` varchar(200) DEFAULT '' COMMENT '资讯标签（英文逗号分隔，如：美食,攻略,亲子）',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  KEY `idx_create_time` (`create_time`),
+  KEY `idx_author_id` (`author_id`),
+  KEY `idx_status_create_time` (`status`, `create_time`),
+  KEY `idx_delete_status` (`delete_time`, `status`),
+  KEY `idx_audit_admin_id` (`audit_admin_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文旅资讯/攻略表（中英双语）';
+DROP TABLE IF EXISTS `sys_dict`;
+CREATE TABLE `sys_dict` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '字典ID',
+  `dict_type` varchar(50) NOT NULL COMMENT '字典类型（如：spot_type、food_type、feedback_type）',
+  `dict_code` varchar(50) NOT NULL COMMENT '字典编码（枚举值）',
+  `dict_label_cn` varchar(100) NOT NULL COMMENT '字典标签（中文）',
+  `dict_label_en` varchar(200) NOT NULL COMMENT '字典标签（英文）',
+  `sort` int NOT NULL DEFAULT 0 COMMENT '排序值',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：1-启用 0-禁用',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_dict_type_code` (`dict_type`,`dict_code`),
+  KEY `idx_dict_type` (`dict_type`),
+  KEY `idx_status` (`status`),
+  KEY `idx_delete_time` (`delete_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统数据字典表（统一管理枚举类）';
+DROP TABLE IF EXISTS `sys_config`;
+CREATE TABLE `sys_config` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+  `config_key` varchar(100) NOT NULL COMMENT '配置键（如：upload_max_size、comment_audit_switch）',
+  `config_value` text NOT NULL COMMENT '配置值（如：1024000、true）',
+  `config_name` varchar(100) NOT NULL COMMENT '配置名称（如：文件上传最大大小、评论审核开关）',
+  `config_type` varchar(50) DEFAULT 'string' COMMENT '配置类型（string/int/boolean）',
+  `module` varchar(50) DEFAULT NULL COMMENT '所属模块（如：系统设置、内容管理）',
+  `remark` varchar(200) DEFAULT NULL COMMENT '备注',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `delete_time` datetime DEFAULT NULL COMMENT '逻辑删除时间（NULL=未删除，非NULL=已删除）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_config_key` (`config_key`),
+  KEY `idx_module` (`module`),
+  KEY `idx_delete_time` (`delete_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统参数配置表';

@@ -1,0 +1,49 @@
+<view class="page">
+  <view class="section">
+    <view class="section-label">{{lang === 'zh' ? '资讯标题' : 'Title'}}<text class="required">*</text></view>
+    <input class="title-input" placeholder="{{lang === 'zh' ? '请输入资讯标题' : 'Enter title'}}" value="{{title}}" bindinput="onTitleInput" maxlength="{{lang === 'zh' ? 200 : 400}}"/>
+    <view class="word-count">{{title.length}}/{{lang === 'zh' ? 200 : 400}}</view>
+  </view>
+
+  <view class="section">
+    <view class="section-label">{{lang === 'zh' ? '封面图片' : 'Cover Image'}}<text class="required">*</text></view>
+    <view class="cover-area" wx:if="{{!coverImg}}" bindtap="chooseCover">
+      <text class="cover-icon">+</text>
+      <text class="cover-text">{{lang === 'zh' ? '添加封面' : 'Add Cover'}}</text>
+    </view>
+    <view class="cover-preview" wx:else>
+      <image class="cover-img" src="{{coverImg}}" mode="aspectFill" bindtap="previewCover"/>
+      <view class="cover-remove" bindtap="removeCover">×</view>
+    </view>
+    <view class="tip">{{lang === 'zh' ? '支持jpg/png格式，不超过2M' : 'jpg/png, max 2MB'}}</view>
+  </view>
+
+  <view class="section">
+    <view class="section-label">{{lang === 'zh' ? '标签' : 'Tags'}}</view>
+    <input class="tags-input" placeholder="{{lang === 'zh' ? '请输入标签（英文逗号分隔）' : 'Tags (comma separated)'}}" value="{{tags}}" bindinput="onTagsInput" maxlength="200"/>
+  </view>
+
+  <view class="section">
+    <view class="section-label">{{lang === 'zh' ? '资讯内容' : 'Content'}}</view>
+    <textarea class="content-input" placeholder="{{lang === 'zh' ? '请输入资讯内容...' : 'Enter content...'}}" value="{{content}}" bindinput="onContentInput" maxlength="5000"/>
+    <view class="word-count">{{content.length}}/5000</view>
+    
+    <view class="image-section">
+      <view class="image-list">
+        <view class="image-item" wx:for="{{contentImages}}" wx:key="index">
+          <image class="content-img" src="{{item}}" mode="aspectFill" bindtap="previewContentImage" data-index="{{index}}"/>
+          <view class="image-remove" bindtap="removeContentImage" data-index="{{index}}">×</view>
+        </view>
+        <view class="image-add" wx:if="{{contentImages.length < 9}}" bindtap="chooseContentImage">
+          <text class="add-icon">+</text>
+          <text class="add-text">{{lang === 'zh' ? '添加图片' : 'Add'}}</text>
+        </view>
+      </view>
+      <view class="tip">{{lang === 'zh' ? '最多9张，每张不超过2M' : 'Max 9 images, 2MB each'}}</view>
+    </view>
+  </view>
+
+  <button class="submit-btn {{(title.length === 0 || !coverImg) ? 'disabled' : ''}}" bindtap="submit" loading="{{submitting}}" disabled="{{title.length === 0 || !coverImg || submitting}}">
+    {{submitting ? (lang === 'zh' ? '发布中...' : 'Publishing...') : (lang === 'zh' ? '发布' : 'Publish')}}
+  </button>
+</view>

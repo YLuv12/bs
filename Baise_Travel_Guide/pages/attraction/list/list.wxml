@@ -1,0 +1,145 @@
+<view class="page">
+  <view class="header">
+    <view class="header-bg"></view>
+    <view class="header-content">
+      <view class="search-row">
+        <view class="search-box">
+          <text class="search-icon">🔍</text>
+          <input class="search-input" placeholder="{{lang === 'zh' ? '搜索红色景点、自然风光...' : 'Search attractions...'}}" value="{{keyword}}" bindconfirm="doSearch" bindinput="onSearch"/>
+          <text class="clear-icon" wx:if="{{keyword}}" bindtap="clearSearch">×</text>
+        </view>
+        <view class="filter-btn" bindtap="toggleFilter">
+          <text class="filter-text">{{lang === 'zh' ? '筛选' : 'Filter'}}</text>
+        </view>
+      </view>
+      <view class="sort-tabs">
+        <view class="sort-item {{sortType === 'hot' ? 'active' : ''}}" bindtap="onSortChange" data-type="hot">
+          <text class="sort-text">{{lang === 'zh' ? '热度' : 'Hot'}}</text>
+          <view class="sort-indicator" wx:if="{{sortType === 'hot'}}"></view>
+        </view>
+        <view class="sort-item {{sortType === 'rating' ? 'active' : ''}}" bindtap="onSortChange" data-type="rating">
+          <text class="sort-text">{{lang === 'zh' ? '评分' : 'Rating'}}</text>
+          <view class="sort-indicator" wx:if="{{sortType === 'rating'}}"></view>
+        </view>
+        <view class="sort-item {{sortType === 'distance' ? 'active' : ''}}" bindtap="onSortChange" data-type="distance">
+          <text class="sort-text">{{lang === 'zh' ? '距离' : 'Distance'}}</text>
+          <view class="sort-indicator" wx:if="{{sortType === 'distance'}}"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="list-content">
+    <view class="attraction-item animate-fade-up" wx:for="{{list}}" wx:key="id" style="animation-delay: {{index * 0.05}}s" bindtap="goToDetail" data-id="{{item.id}}">
+      <view class="item-left">
+        <view class="item-img-wrap">
+          <image class="item-img" src="{{item.image}}" mode="aspectFill" lazy-load/>
+          <view class="item-badge">
+            <text class="badge-star">★</text>
+            <text class="badge-num">{{item.rating}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="item-content">
+        <view class="item-title-row">
+          <text class="item-title">{{item.name}}</text>
+        </view>
+        
+        <view class="item-tags">
+          <text class="tag {{item.category}}" wx:for="{{item.tags}}" wx:key="index" wx:for-item="tag">{{tag}}</text>
+        </view>
+        
+        <view class="item-info-row">
+          <view class="info-item" wx:if="{{item.distanceText}}">
+            <text class="info-icon">📏</text>
+            <text class="info-text">{{lang === 'zh' ? '距您' : ''}}{{item.distanceText}}</text>
+          </view>
+        </view>
+        
+        <view class="item-info-row">
+          <view class="info-item">
+            <text class="info-icon">📍</text>
+            <text class="info-text">{{item.region}}</text>
+          </view>
+        </view>
+        
+        <view class="item-info-row">
+          <view class="info-item">
+            <text class="info-icon">🕐</text>
+            <text class="info-text">{{item.openTime}}</text>
+          </view>
+        </view>
+
+        <view class="item-ticket">
+            <text>{{item.ticket}}</text>
+        </view>
+        
+        <view class="item-footer">
+          <view class="footer-item">
+            <text class="footer-icon">⭐</text>
+            <text class="footer-value">{{item.rating}}</text>
+            <text class="footer-label">{{lang === 'zh' ? '分' : 'pts'}}</text>
+          </view>
+          <view class="footer-divider"></view>
+          <view class="footer-item">
+            <text class="footer-icon">👥</text>
+            <text class="footer-value">{{item.ratingCount}}</text>
+            <text class="footer-label">{{lang === 'zh' ? '人评分' : 'ratings'}}</text>
+          </view>
+          <view class="footer-divider"></view>
+          <view class="footer-item">
+            <text class="footer-icon">👁</text>
+            <text class="footer-value">{{item.viewCountText}}</text>
+            <text class="footer-label">{{lang === 'zh' ? '人浏览' : 'views'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{!loading && list.length === 0}}">
+      <text class="empty-icon">🏞️</text>
+      <text class="empty-text">{{lang === 'zh' ? '暂无景点' : 'No attractions'}}</text>
+    </view>
+
+    <view class="loading" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">{{lang === 'zh' ? '加载中...' : 'Loading...'}}</text>
+    </view>
+    
+    <view class="reach-bottom" wx:if="{{!loading && list.length > 0 && noMore}}">
+      <view class="reach-line"></view>
+      <text class="reach-text">{{lang === 'zh' ? '已经到底啦～' : 'No more data'}}</text>
+      <view class="reach-line"></view>
+    </view>
+  </view>
+
+  <view class="back-top {{showBackTop ? 'show' : 'hide'}}" bindtap="goToTop">
+    <view class="back-top-arrow"><text>↑</text></view>
+  </view>
+
+  <view class="filter-panel {{showFilter ? 'show' : ''}}" catchtouchmove="true">
+    <view class="filter-mask" bindtap="closeFilter"></view>
+    <view class="filter-content animate-slide">
+      <view class="filter-header">
+        <text class="filter-title">{{lang === 'zh' ? '筛选' : 'Filter'}}</text>
+        <text class="filter-clear" bindtap="clearFilter">{{lang === 'zh' ? '重置' : 'Reset'}}</text>
+      </view>
+      <view class="filter-section">
+        <view class="filter-label">{{lang === 'zh' ? '景点类型' : 'Category'}}</view>
+        <view class="filter-options">
+          <view class="option-item {{category === item.value ? 'active' : ''}}" wx:for="{{categories}}" wx:key="value" bindtap="onCategoryChange" data-value="{{item.value}}">{{item.label}}</view>
+        </view>
+      </view>
+      <view class="filter-section">
+        <view class="filter-label">{{lang === 'zh' ? '所在区域' : 'Region'}}</view>
+        <view class="filter-options">
+          <view class="option-item {{region === item.value ? 'active' : ''}}" wx:for="{{regions}}" wx:key="value" bindtap="onRegionChange" data-value="{{item.value}}">{{item.label}}</view>
+        </view>
+      </view>
+      <view class="filter-btns">
+        <view class="filter-btn cancel" bindtap="closeFilter">{{lang === 'zh' ? '取消' : 'Cancel'}}</view>
+        <view class="filter-btn confirm" bindtap="closeFilter">{{lang === 'zh' ? '确定' : 'Confirm'}}</view>
+      </view>
+    </view>
+  </view>
+</view>
